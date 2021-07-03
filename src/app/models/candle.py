@@ -1,6 +1,7 @@
 import logging
 
 from sqlalchemy import Column
+from sqlalchemy import desc
 from sqlalchemy import DateTime
 from sqlalchemy import Float
 from sqlalchemy import Integer
@@ -8,6 +9,8 @@ from sqlalchemy.exc import IntegrityError
 
 from app.models.base import Base
 from app.models.base import session_scope
+
+import constants
 
 logger = logging.getLogger(__name__)
         
@@ -47,6 +50,29 @@ class BaseCandleMixin(object):
         with session_scope() as session:
             session.add(self)
             
+    @classmethod
+    def get_all_candles(cls, limit=100):
+        with session_scope() as session:
+            candles = session.query(cls).order_by(
+                desc(cls.time)).limit(limit).all()
+
+        if candles is None:
+            return None
+
+        candles.reverse()
+        return candles
+
+    @property
+    def value(self):
+        return {
+            'time': self.time,
+            'open': self.open,
+            'close': self.close,
+            'high': self.high,
+            'low': self.low,
+            'volume': self.volume,
+        }
+    
 class BtcJpyBaseCandle1H(BaseCandleMixin, Base):
     __tablename__ = 'BTC_JPY_1H'
 
@@ -57,3 +83,12 @@ class BtcJpyBaseCandle1M(BaseCandleMixin, Base):
 
 class BtcJpyBaseCandle5S(BaseCandleMixin, Base):
     __tablename__ = 'BTC_JPY_5S'
+
+def factory_candle_class(product_code, duration):
+    if product_code == constants.PRODUCT_CODE_BTC_JPY:
+        if duration == constants.DURATION_5S:
+            return BtcJpyBaseCandle5S
+        if duration == constants.DURATION_1M:
+            return BtcJpyBaseCandle1M
+        if duration == constants.DURATION_1H:
+            return BtcJpyBaseCandle1H
