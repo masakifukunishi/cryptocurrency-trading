@@ -1,15 +1,17 @@
-DURATION_5S = '5s'
+DURATION_10S = '10s'
 DURATION_1M = '1m'
 DURATION_1H = '1h'
-DURATIONS = [DURATION_5S, DURATION_1M, DURATION_1H]
-GRANULARITY_5S = 'S5'
-GRANULARITY_1M = 'M1'
-GRANULARITY_1H = 'H1'
+DURATIONS = [DURATION_10S, DURATION_1M, DURATION_1H]
+GRANULARITY_10S = '10'
+GRANULARITY_1M = '60'
+GRANULARITY_1H = '3600'
+
+
 
 TRADE_MAP = {
-    DURATION_5S: {
-        'duration': DURATION_5S,
-        'granularity': GRANULARITY_5S,
+    DURATION_10S: {
+        'duration': DURATION_10S,
+        'granularity': GRANULARITY_10S,
     },
     DURATION_1M: {
         'duration': DURATION_1M,
@@ -18,9 +20,10 @@ TRADE_MAP = {
     DURATION_1H: {
         'duration': DURATION_1H,
         'granularity': GRANULARITY_1H,
-    }
+    },
 }
 
 BUY = "BUY"
 SELL = "SELL"
 PRODUCT_CODE_BTC_JPY = "BTC_JPY"
+GET_TICKER_DURATION = 3

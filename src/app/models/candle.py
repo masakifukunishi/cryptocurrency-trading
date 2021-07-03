@@ -73,22 +73,40 @@ class BaseCandleMixin(object):
             'volume': self.volume,
         }
     
-class BtcJpyBaseCandle1H(BaseCandleMixin, Base):
-    __tablename__ = 'BTC_JPY_1H'
-
-
+class BtcJpyBaseCandle10S(BaseCandleMixin, Base):
+    __tablename__ = 'BTC_JPY_10S'
+    
 class BtcJpyBaseCandle1M(BaseCandleMixin, Base):
     __tablename__ = 'BTC_JPY_1M'
 
-
-class BtcJpyBaseCandle5S(BaseCandleMixin, Base):
-    __tablename__ = 'BTC_JPY_5S'
+    
+class BtcJpyBaseCandle1H(BaseCandleMixin, Base):
+    __tablename__ = 'BTC_JPY_1H'
+    
 
 def factory_candle_class(product_code, duration):
     if product_code == constants.PRODUCT_CODE_BTC_JPY:
-        if duration == constants.DURATION_5S:
-            return BtcJpyBaseCandle5S
+        if duration == constants.DURATION_10S:
+            return BtcJpyBaseCandle10S
         if duration == constants.DURATION_1M:
             return BtcJpyBaseCandle1M
         if duration == constants.DURATION_1H:
             return BtcJpyBaseCandle1H
+
+def create_candle_with_duration(product_code, duration, ticker):
+    cls = factory_candle_class(product_code, duration)
+    ticker_time = ticker.truncate_date_time(duration)
+    current_candle = cls.get(ticker_time)
+    price = ticker.mid_price
+    if current_candle is None:
+        cls.create(ticker_time, price, price, price, price, ticker.volume)
+        return True
+
+    if current_candle.high <= price:
+        current_candle.high = price
+    elif current_candle.low >= price:
+        current_candle.low = price
+    current_candle.volume += ticker.volume
+    current_candle.close = price
+    current_candle.save()
+    return False

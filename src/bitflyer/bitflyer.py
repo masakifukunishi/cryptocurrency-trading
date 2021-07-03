@@ -1,5 +1,6 @@
 from datetime import datetime
 import logging
+import math
 import time
 
 import dateutil.parser
@@ -28,6 +29,29 @@ class Ticker(object):
     @property
     def mid_price(self):
         return (self.bid + self.ask) / 2
+
+    @property
+    def time(self):
+        return datetime.utcfromtimestamp(self.timestamp)
+
+    def truncate_date_time(self, duration):
+        ticker_time = self.time
+        if duration == constants.DURATION_10S:
+            new_sec = math.floor(self.time.second / 10) * 10
+            ticker_time = datetime(
+                self.time.year, self.time.month, self.time.day,
+                self.time.hour, self.time.minute, new_sec)
+            time_format = '%Y-%m-%d %H:%M:%S'
+        elif duration == constants.DURATION_1M:
+            time_format = '%Y-%m-%d %H:%M'
+        elif duration == constants.DURATION_1H:
+            time_format = '%Y-%m-%d %H'
+        else:
+            logger.warning('action=truncate_date_time error=no_datetime_format')
+            return None
+
+        str_date = datetime.strftime(ticker_time, time_format)
+        return datetime.strptime(str_date, time_format)
     
 
 class Order(object):
@@ -75,6 +99,23 @@ class APIClient(object):
         volume = float(resp['volume'])
         return Ticker(product_code, timestamp, bid, ask, volume)
 
+    def get_realtime_ticker(self, product_code, callback):
+        while True:
+            try:
+                resp = self.client.ticker(product_code=product_code)
+            except Exception as e:
+                logger.error(f'action=get_realtime_ticker error={e}')
+                raise
+            timestamp = datetime.timestamp(
+                dateutil.parser.parse(resp['timestamp']))
+            product_code = resp['product_code']
+            bid = float(resp['best_bid'])
+            ask = float(resp['best_ask'])
+            volume = float(resp['volume'])
+            ticker = Ticker(product_code, timestamp, bid, ask, volume)
+            callback(ticker)
+            time.sleep(constants.GET_TICKER_DURATION)
+            
     def send_order(self, order: Order):
 #         size = int(order.size*100000000)/100000000
 #         try:
