@@ -3,5 +3,7 @@ main.ipynb
 __pycache__
 .ipynb_checkpoints
 
+# DB
+src/cryptocurrency_data.sql
 # env
 settings.ini
