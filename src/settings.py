@@ -12,7 +12,6 @@ product_code = conf['bitflyer']['product_code']
 db_name = conf['db']['name']
 db_driver = conf['db']['driver']
 
-web_port = int(conf['web']['port'])
 
 trade_duration = conf['pytrading']['trade_duration'].lower()
 back_test = bool_from_str(conf['pytrading']['back_test'])
