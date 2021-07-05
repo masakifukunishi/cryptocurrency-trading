@@ -15,6 +15,6 @@ RUN wget https://repo.anaconda.com/archive/Anaconda3-2021.05-Linux-x86_64.sh && 
 
 ENV PATH /opt/anaconda3/bin:$PATH
 
-RUN pip install pybitflyer
+RUN pip install pybitflyer websocket-client
 
 WORKDIR /src

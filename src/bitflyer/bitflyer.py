@@ -2,6 +2,8 @@ from datetime import datetime
 import logging
 import math
 import time
+import json
+import websocket
 
 import dateutil.parser
 import pybitflyer
@@ -167,3 +169,55 @@ class APIClient(object):
         )
         print(order)
         return order
+
+class RealtimeAPI(object):
+
+    def __init__(self, url, channel, callback):
+        self.url = url
+        self.channel = channel
+        self.callback = callback
+
+        #Define Websocket
+        self.ws = websocket.WebSocketApp(self.url,header=None,on_open=self.on_open, on_message=self.on_message, on_error=self.on_error, on_close=self.on_close)
+        websocket.enableTrace(False)
+
+    def run(self):
+        #ws has loop. To break this press ctrl + c to occur Keyboard Interruption Exception.
+        self.ws.run_forever()   
+        logger.info('Web Socket process ended.')
+
+    """
+    Below are callback functions of websocket.
+    """
+    # when we get message
+    def on_message(self, ws, message):
+        resp = json.loads(message)['params']['message']
+        self.set_realtime_ticker(resp, self.callback)
+
+    # when error occurs
+    def on_error(self, ws, error):
+        logger.error(error)
+
+    # when websocket closed.
+    def on_close(self, ws):
+        logger.info('disconnected streaming server')
+
+    # when websocket opened.
+    def on_open(self, ws):
+        logger.info('connected streaming server')
+        input_data = json.dumps(
+            {'method' : 'subscribe',
+            'params' : {'channel' : self.channel}
+            }
+        )
+        ws.send(input_data)
+        
+    def set_realtime_ticker(self, resp, callback):
+        timestamp = datetime.timestamp(
+            dateutil.parser.parse(resp['timestamp']))
+        product_code = resp['product_code']
+        bid = float(resp['best_bid'])
+        ask = float(resp['best_ask'])
+        volume = float(resp['volume'])
+        ticker = Ticker(product_code, timestamp, bid, ask, volume)
+        callback(ticker)

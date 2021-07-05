@@ -45,10 +45,3 @@ def api_make_handler():
     df.set_all_candles(limit)
     return jsonify(df.value), 200
 
-# if __name__ == '__main__':
-#     app.run(host='0.0.0.0', port=8888, debug=True)
-
-# def start():
-# #     app.run(host='127.0.0.1', port=settings.web_port, threaded=True)
-#     app.run(host='0.0.0.0', port=settings.web_port, threaded=True)
-
