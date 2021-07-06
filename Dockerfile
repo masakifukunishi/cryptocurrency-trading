@@ -26,9 +26,10 @@ RUN wget http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz && \
   make install
 
 RUN pip install \
-  pybitflyer\
-  websocket-client\
-  TA-Lib
+  pybitflyer \
+  websocket-client \
+  TA-Lib \
+  omitempty
 
 RUN rm -R ta-lib ta-lib-0.4.0-src.tar.gz
 
