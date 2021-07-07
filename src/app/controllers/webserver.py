@@ -65,5 +65,72 @@ def api_make_handler():
         df.add_sma(period_2)
         df.add_sma(period_3)
 
+    ema = request.args.get('ema')
+    if ema:
+        str_ema_period_1 = request.args.get('emaPeriod1')
+        str_ema_period_2 = request.args.get('emaPeriod2')
+        str_ema_period_3 = request.args.get('emaPeriod3')
+        if str_ema_period_1:
+            period_1 = int(str_ema_period_1)
+        if str_ema_period_2:
+            period_2 = int(str_ema_period_2)
+        if str_ema_period_3:
+            period_3 = int(str_ema_period_3)
+        if not str_ema_period_1 or period_1 < 0:
+            period_1 = 7
+        if not str_ema_period_2 or period_2 < 0:
+            period_2 = 14
+        if not str_ema_period_3 or period_3 < 0:
+            period_3 = 50
+        df.add_ema(period_1)
+        df.add_ema(period_2)
+        df.add_ema(period_3)
+
+    bbands = request.args.get('bbands')
+    if bbands:
+        str_n = request.args.get('bbandsN')
+        str_k = request.args.get('bbandsK')
+        if str_n:
+            n = int(str_n)
+        if str_k:
+            k = float(str_k)
+        if not str_n or n < 0 or n is None:
+            n = 20
+        if not str_k or k < 0 or k is None:
+            k = 2.0
+        df.add_bbands(n, k)
+
+    ichimoku = request.args.get('ichimoku')
+    if ichimoku:
+        df.add_ichimoku()
+
+    rsi = request.args.get('rsi')
+    if rsi:
+        str_period = request.args.get('rsiPeriod')
+        if str_period:
+            period = int(str_period)
+        else:
+            period = 14
+        df.add_rsi(period)
+
+    macd = request.args.get('macd')
+    if macd:
+        str_macd_period_1 = request.args.get('macdPeriod1')
+        str_macd_period_2 = request.args.get('macdPeriod2')
+        str_macd_period_3 = request.args.get('macdPeriod3')
+        if str_macd_period_1:
+            period_1 = int(str_macd_period_1)
+        if str_macd_period_2:
+            period_2 = int(str_macd_period_2)
+        if str_macd_period_3:
+            period_3 = int(str_macd_period_3)
+        if not str_macd_period_1 or period_1 < 0:
+            period_1 = 12
+        if not str_macd_period_2 or period_2 < 0:
+            period_2 = 26
+        if not str_macd_period_3 or period_3 < 0:
+            period_3 = 9
+        df.add_macd(period_1, period_2, period_3)
+        
     return jsonify(df.value), 200
 
