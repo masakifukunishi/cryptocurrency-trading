@@ -131,6 +131,10 @@ def api_make_handler():
         if not str_macd_period_3 or period_3 < 0:
             period_3 = 9
         df.add_macd(period_1, period_2, period_3)
-        
+
+    events = request.args.get('events')
+    if events:
+        df.add_events(df.candles[0].time)
+
     return jsonify(df.value), 200
 

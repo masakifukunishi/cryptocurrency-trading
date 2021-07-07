@@ -74,6 +74,12 @@
                 senkouB: [],
                 chikou: []
             },
+            events: {
+                enable: false,
+                indexes: [],
+                values: [],
+                first: null
+            },
             volume: {
                 enable: false,
                 index: [],
@@ -111,6 +117,8 @@
             config.ichimoku.senkouA= [];
             config.ichimoku.senkouB= [];
             config.ichimoku.chikou = [];
+            config.events.indexes = [];
+            config.events.values = [];
             config.volume.index = [];
             config.rsi.indexes = [];
             config.macd.indexes = [];
@@ -189,6 +197,17 @@
                 }
             }
 
+            if (config.events.enable == true && config.events.indexes.length > 0){
+                options.series[config.events.indexes[0]] = {
+                    'type': 'line',
+                    tooltip: 'none',
+                    enableInteractivity: false,
+                    lineWidth: 0
+                };
+                view.columns.push(config.candlestick.numViews + config.events.indexes[0]);
+                view.columns.push(config.candlestick.numViews + config.events.indexes[1]);
+            }
+
             if (config.volume.enable == true) {
                 if ($('#volume_div').length == 0) {
                     $('#technical_div').append(
@@ -263,7 +282,7 @@
                         legend: {'position': 'none'},
                         seriesType: "bars",
                         series: {
-                            1: {type: 'line', lineWidth: 1 },
+                            1: {type: 'line', lineWidth: 1},
                             2: {type: 'line', lineWidth: 1}
                         }
                     },
@@ -325,6 +344,10 @@
 
             if (config.ichimoku.enable == true) {
                 params["ichimoku"] = true;
+            }
+
+            if (config.events.enable == true) {
+                params["events"] = true;
             }
 
             if (config.rsi.enable == true) {
@@ -420,6 +443,26 @@
                     dataTable.addColumn('number', 'SenkouA');
                     dataTable.addColumn('number', 'SenkouB');
                     dataTable.addColumn('number', 'Chikou');
+                }
+
+                if (data['events'] != undefined) {
+                    config.dataTable.index += 1;
+                    config.events.indexes[0] = config.dataTable.index;
+                    config.dataTable.index += 1;
+                    config.events.indexes[1] = config.dataTable.index;
+
+                    config.events.values = data['events']['signals'];
+                    if (config.events.values != undefined) {
+                        config.events.first = config.events.values.shift();
+                    };
+
+                    dataTable.addColumn('number', 'Marker');
+                    dataTable.addColumn({type:'string', role:'annotation'});
+
+                    if (data['events']['profit'] != undefined) {
+                        profit = String(Math.round(data['events']['profit'] * 100) / 100);
+                        $('#profit').html("Change:" + profit);
+                    }
                 }
 
                 if (data['rsi'] != undefined ){
@@ -534,6 +577,21 @@
                             datas.push(null);
                         } else {
                             datas.push(config.ichimoku.chikou[i]);
+                        }
+                    }
+
+                    if (data['events'] != undefined) {
+                        var event = config.events.first
+                        if (event == undefined) {
+                            datas.push(null);
+                            datas.push(null);
+                        }else if(event.time == candle.time) {
+                            datas.push(candle.high);
+                            datas.push(event.side);
+                            config.events.first = config.events.values.shift();
+                        }else{
+                            datas.push(null);
+                            datas.push(null);
                         }
                     }
 
@@ -694,6 +752,16 @@
                 send();
             });
 
+            $('#inputEvents').change(function() {
+                if (this.checked === true) {
+                    config.events.enable = true;
+                } else {
+                    config.events.enable = false;
+                    $('#profit').html("");
+                }
+                send();
+            });
+
         }
 
     </script>
@@ -744,6 +812,10 @@
     Period<input id="inputMacdPeriod1" type="text" value="12" style="width: 15px;">
     <input id="inputMacdPeriod2" type="text" value="26" style="width: 15px;">
     <input id="inputMacdPeriod3" type="text" value="9" style="width: 15px;">
+</div>
+
+<div>
+    Events <input id="inputEvents" type="checkbox"> <div id="profit"></div>
 </div>
 
 <div id="dashboard_div">
