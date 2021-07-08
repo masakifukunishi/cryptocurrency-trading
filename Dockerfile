@@ -29,7 +29,8 @@ RUN pip install \
   pybitflyer \
   websocket-client \
   TA-Lib \
-  omitempty
+  omitempty \
+  dict2obj
 
 RUN rm -R ta-lib ta-lib-0.4.0-src.tar.gz
 
