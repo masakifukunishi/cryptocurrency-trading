@@ -203,3 +203,41 @@ class DataFrameCandle(object):
             self.events = signal_events
             return True
         return False
+
+    def back_test_ema(self, period_1: int, period_2: int):
+        if len(self.candles) <= period_1 or len(self.candles) <= period_2:
+            return None
+
+        signal_events = SignalEvents()
+        ema_value_1 = talib.EMA(np.array(self.closes), period_1)
+        ema_value_2 = talib.EMA(np.array(self.closes), period_2)
+
+        for i in range(1, len(self.candles)):
+            if i < period_1 or i < period_2:
+                continue
+
+            if ema_value_1[i-1] < ema_value_2[i-1] and ema_value_1[i] >= ema_value_2[i]:
+                signal_events.buy(product_code=self.product_code, time=self.candles[i].time, price=self.candles[i].close, size=1.0, save=False)
+
+            if ema_value_1[i-1] > ema_value_2[i-1] and ema_value_1[i] <= ema_value_2[i]:
+                signal_events.sell(product_code=self.product_code, time=self.candles[i].time, price=self.candles[i].close, size=1.0, save=False)
+
+        return signal_events
+
+    def optimize_ema(self):
+        performance = 0
+        best_period_1 = 7
+        best_period_2 = 14
+
+        for period_1 in range(5, 15):
+            for period_2 in range(12, 20):
+                signal_events = self.back_test_ema(period_1, period_2)
+                if signal_events is None:
+                    continue
+                profit = signal_events.profit
+                if performance < profit:
+                    performance = profit
+                    best_period_1 = period_1
+                    best_period_2 = period_2
+
+        return performance, best_period_1, best_period_2
