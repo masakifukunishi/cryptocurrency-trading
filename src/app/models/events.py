@@ -21,7 +21,7 @@ class SignalEvent(Base):
     product_code = Column(String)
     side = Column(String)
     price = Column(Float)
-    size = Column(Integer)
+    size = Column(Float)
 
     def save(self):
         with session_scope() as session:
