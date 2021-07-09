@@ -57,11 +57,12 @@ class Ticker(object):
     
 
 class Order(object):
-    def __init__(self, product_code, side, size,
+    def __init__(self, product_code, side, size, price='',
                  child_order_type='MARKET', minute_to_expire=10, child_order_state=None, child_order_acceptance_id=None):
         self.product_code = product_code
         self.side = side
         self.size = size
+        self.price = price
         self.child_order_type = child_order_type
         self.minute_to_expire = minute_to_expire
         self.child_order_state = child_order_state
@@ -76,16 +77,26 @@ class APIClient(object):
         self.api_secret = api_secret
         self.client = pybitflyer.API(api_key=api_key, api_secret=api_secret)
 
-    def get_balance(self) -> Balance:
+    def get_balance_jpy(self) -> Balance:
         try:
             resp = self.client.getbalance()
         except Exception as e:
-            logger.error(f'action=get_balance error={e}')
+            logger.error(f'action=get_balance_jpy error={e}')
             raise
-            
         currency = resp[0]['currency_code']
         available = resp[0]['available']
         return Balance(currency, available)
+
+    def get_balance_btc(self) -> Balance:
+        try:
+            resp = self.client.getbalance()
+        except Exception as e:
+            logger.error(f'action=get_balance_btc error={e}')
+            raise
+        currency = resp[1]['currency_code']
+        available = resp[1]['available']
+        return Balance(currency, available)
+    
 
     def get_ticker(self, product_code) -> Ticker:
         try:
@@ -119,7 +130,6 @@ class APIClient(object):
             time.sleep(constants.GET_TICKER_DURATION)
             
     def send_order(self, order: Order):
-#         size = int(order.size*100000000)/100000000
 #         try:
 #             resp = self.client.sendchildorder(product_code=order.product_code,
 #                                      child_order_type=order.child_order_type,
@@ -130,6 +140,7 @@ class APIClient(object):
 #         except Exception as e:
 #             logger.error(f'action=send_order error={e}')
 #             raise
+        print(order.size)
         resp = {'child_order_acceptance_id': 'JRF20210702-105120-972173'}
         order_id = resp['child_order_acceptance_id']
         order = self.wait_order_complete(order_id)
@@ -138,6 +149,7 @@ class APIClient(object):
             logger.error('action=send_order error=timeout')
             raise OrderTimeoutError
         
+        return order
     def wait_order_complete(self, order_id) -> Order:
         count = 0
         timeout_count = 5
@@ -158,16 +170,15 @@ class APIClient(object):
         except Exception as e:
             logger.error(f'action=get_order error={e}')
             raise
-
         order = Order(
             product_code=resp[0]['product_code'],
             side=resp[0]['side'],
             size=float(resp[0]['size']),
+            price=float(resp[0]['price']),
             child_order_type=resp[0]['child_order_type'],
             child_order_state=resp[0]['child_order_state'],
             child_order_acceptance_id=resp[0]['child_order_acceptance_id']
         )
-        print(order)
         return order
 
 class RealtimeAPI(object):

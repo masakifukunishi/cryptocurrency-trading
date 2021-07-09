@@ -134,7 +134,11 @@ def api_make_handler():
 
     events = request.args.get('events')
     if events:
-        df.add_events(df.candles[0].time)
+        if settings.back_test:
+            from app.controllers.streamdata import stream
+            df.events = stream.ai.signal_events
+        else:
+            df.add_events(df.candles[0].time)
 
     return jsonify(df.value), 200
 
