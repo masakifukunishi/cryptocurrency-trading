@@ -43,7 +43,6 @@ class StreamData(object):
         url = settings.realtime_api_end_point
         channel = settings.realtime_ticker_product_code
         json_rpc = RealtimeAPI(url=url, channel=channel, callback=trade_with_ai)
-        json_rpc.run()
 
     def trade(self, ticker: Ticker, ai: AI):
         logger.info(f'action=trade ticker={ticker.__dict__}')

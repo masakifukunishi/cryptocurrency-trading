@@ -444,7 +444,7 @@
                     dataTable.addColumn('number', 'SenkouB');
                     dataTable.addColumn('number', 'Chikou');
                 }
-
+                console.log(data["events"])
                 if (data['events'] != undefined) {
                     config.dataTable.index += 1;
                     config.events.indexes[0] = config.dataTable.index;
@@ -581,6 +581,7 @@
                     }
 
                     if (data['events'] != undefined) {
+                        console.log(data["events"])
                         var event = config.events.first
                         if (event == undefined) {
                             datas.push(null);

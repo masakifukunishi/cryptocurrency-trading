@@ -130,17 +130,16 @@ class APIClient(object):
             time.sleep(constants.GET_TICKER_DURATION)
             
     def send_order(self, order: Order):
-#         try:
-#             resp = self.client.sendchildorder(product_code=order.product_code,
-#                                      child_order_type=order.child_order_type,
-#                                      side=order.side,
-#                                      size=size,
-#                                      minute_to_expire=order.minute_to_expire)
-#             logger.info(f'action=send_order resp={resp}')
-#         except Exception as e:
-#             logger.error(f'action=send_order error={e}')
-#             raise
-        print(order.size)
+        try:
+            resp = self.client.sendchildorder(product_code=order.product_code,
+                                     child_order_type=order.child_order_type,
+                                     side=order.side,
+                                     size=size,
+                                     minute_to_expire=order.minute_to_expire)
+            logger.info(f'action=send_order resp={resp}')
+        except Exception as e:
+            logger.error(f'action=send_order error={e}')
+            raise
         resp = {'child_order_acceptance_id': 'JRF20210702-105120-972173'}
         order_id = resp['child_order_acceptance_id']
         order = self.wait_order_complete(order_id)
@@ -150,6 +149,7 @@ class APIClient(object):
             raise OrderTimeoutError
         
         return order
+
     def wait_order_complete(self, order_id) -> Order:
         count = 0
         timeout_count = 5
@@ -161,7 +161,7 @@ class APIClient(object):
             count += 1
             if count > timeout_count:
                 return None
-            
+
     def get_order(self, order_id) -> Order:
         try:
             resp = self.client.getchildorders(product_code=settings.product_code,
@@ -174,7 +174,7 @@ class APIClient(object):
             product_code=resp[0]['product_code'],
             side=resp[0]['side'],
             size=float(resp[0]['size']),
-            price=float(resp[0]['price']),
+            price=float(resp[0]['average_price']),
             child_order_type=resp[0]['child_order_type'],
             child_order_state=resp[0]['child_order_state'],
             child_order_acceptance_id=resp[0]['child_order_acceptance_id']
@@ -187,16 +187,21 @@ class RealtimeAPI(object):
         self.url = url
         self.channel = channel
         self.callback = callback
-
+        self.connect()
         #Define Websocket
-        self.ws = websocket.WebSocketApp(self.url,header=None,on_open=self.on_open, on_message=self.on_message, on_error=self.on_error, on_close=self.on_close)
-        websocket.enableTrace(False)
+#         self.ws = websocket.WebSocketApp(self.url,header=None,on_open=self.on_open, on_message=self.on_message, on_error=self.on_error, on_close=self.on_close)
+#         websocket.enableTrace(False)
 
-    def run(self):
-        #ws has loop. To break this press ctrl + c to occur Keyboard Interruption Exception.
-        self.ws.run_forever()   
+    def connect(self):
+        self.ws = websocket.WebSocketApp(self.url,header=None,on_open=self.on_open, on_message=self.on_message, on_error=self.on_error, on_close=self.on_close)
+        self.ws.keep_running = True 
+        self.ws.run_forever()
         logger.info('Web Socket process ended.')
 
+    def disconnect(self):
+        self.ws.keep_running = False
+        self.ws.close()
+        
     """
     Below are callback functions of websocket.
     """
@@ -206,8 +211,11 @@ class RealtimeAPI(object):
         self.set_realtime_ticker(resp, self.callback)
 
     # when error occurs
-    def on_error(self, ws, error):
+    def on_error(self, ws, error, _="", __ =""):
         logger.error(error)
+        self.disconnect()
+        time.sleep(0.5)
+        self.connect()
 
     # when websocket closed.
     def on_close(self, ws):

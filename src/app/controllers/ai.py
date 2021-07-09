@@ -75,9 +75,9 @@ class AI(object):
             logger.warning('action=buy status=false error=old_time')
             return False
 
-#         if not self.signal_events.can_buy(candle.time):
-#             logger.warning('action=buy status=false error=previous_was_buy')
-#             return False
+        if not self.signal_events.can_buy(candle.time):
+            logger.warning('action=buy status=false error=previous_was_buy')
+            return False
 
         balance = self.API.get_balance_jpy()
         available = float(balance.available * self.use_percent)
