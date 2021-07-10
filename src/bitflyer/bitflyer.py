@@ -134,7 +134,7 @@ class APIClient(object):
             resp = self.client.sendchildorder(product_code=order.product_code,
                                      child_order_type=order.child_order_type,
                                      side=order.side,
-                                     size=size,
+                                     size=order.size,
                                      minute_to_expire=order.minute_to_expire)
             logger.info(f'action=send_order resp={resp}')
         except Exception as e:
