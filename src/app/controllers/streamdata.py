@@ -45,7 +45,7 @@ class StreamData(object):
         json_rpc = RealtimeAPI(url=url, channel=channel, callback=trade_with_ai)
 
     def trade(self, ticker: Ticker, ai: AI):
-        logger.info(f'action=trade ticker={ticker.__dict__}')
+        # logger.info(f'action=trade ticker={ticker.__dict__}')
         for duration in constants.DURATIONS:
             is_created = create_candle_with_duration(ticker.product_code, duration, ticker)
             if is_created and duration == settings.trade_duration:

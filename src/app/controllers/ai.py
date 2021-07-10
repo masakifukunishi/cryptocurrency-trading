@@ -54,7 +54,7 @@ class AI(object):
         self.decimal_point = 3
 
     def update_optimize_params(self, is_continue: bool):
-        logger.info('action=update_optimize_params status=run')
+        logger.info(f'action=update_optimize_params status=run is_continue={is_continue}')
         df = DataFrameCandle(self.product_code, self.duration)
         df.set_all_candles(self.past_period)
         if df.candles:
@@ -62,17 +62,22 @@ class AI(object):
         if self.optimized_trade_params is not None:
             logger.info(f'action=update_optimize_params params={self.optimized_trade_params.__dict__}')
 
+        logger.info(f'action=update_optimize_params status=end')
+        
         if is_continue and self.optimized_trade_params is None:
             time.sleep(10 * duration_seconds(self.duration))
             self.update_optimize_params(is_continue)
 
     def buy(self, candle):
         if self.back_test:
+            logger.info('action=buy type=back_test status=run')
             could_buy = self.signal_events.buy(self.product_code, candle.time, candle.close, 0.001, save=False)
             return could_buy
 
         if self.start_trade > candle.time:
             logger.warning('action=buy status=false error=old_time')
+            logger.warning(f'start_trade={self.start_trade}')
+            logger.warning(f'candle_time={candle.time}')
             return False
 
         if not self.signal_events.can_buy(candle.time):
@@ -87,36 +92,45 @@ class AI(object):
         size = math.floor(size * 10 ** self.decimal_point) / (10 ** self.decimal_point)
         order = Order(self.product_code, constants.BUY, size)
         resp = self.API.send_order(order)
+        logger.info(f'action=buy responce={resp}')
         could_buy = self.signal_events.buy(self.product_code, candle.time, resp.price, resp.size, save=True)
         return could_buy
 
     def sell(self, candle):
         if self.back_test:
+            logger.info('action=sell type=back_test status=run')
             could_sell = self.signal_events.sell(self.product_code, candle.time, candle.close, 0.001, save=False)
             return could_sell
 
         if self.start_trade > candle.time:
             logger.warning('action=sell status=false error=old_time')
+            logger.warning(f'start_trade={self.start_trade}')
+            logger.warning(f'candle_time={candle.time}')
             return False
 
         if not self.signal_events.can_sell(candle.time):
             logger.warning('action=sell status=false error=previous_was_sell')
             return False
+
         balance = self.API.get_balance_btc()
         size = math.floor(balance.available * 10 ** self.decimal_point) / (10 ** self.decimal_point)
         order = Order(self.product_code, constants.SELL, size)
         resp = self.API.send_order(order)
+        logger.info(f'action=sell responce={resp}')
         could_sell = self.signal_events.sell(self.product_code, candle.time, resp.price, resp.size, save=True)
         return could_sell
 
     def trade(self):
         logger.info('action=trade status=run')
-        params = self.optimized_trade_params
-        if params is None:
-            return
-
         df = DataFrameCandle(self.product_code, self.duration)
         df.set_all_candles(self.past_period)
+        params = self.optimized_trade_params
+        if params is None:
+            logger.info(f'action=trade optimized_trade_params=None candles={len(df.candles)}')
+            if len(df.candles) >= settings.minimum_period:
+                self.update_optimize_params(is_continue=True)
+            return
+
 
         if params.ema_enable:
             ema_values_1 = talib.EMA(np.array(df.closes), params.ema_period_1)

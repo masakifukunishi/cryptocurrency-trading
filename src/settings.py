@@ -14,10 +14,10 @@ realtime_ticker_product_code = conf['bitflyer']['realtime_ticker_product_code']
 db_name = conf['db']['name']
 db_driver = conf['db']['driver']
 
-
 trade_duration = conf['pytrading']['trade_duration'].lower()
 back_test = bool_from_str(conf['pytrading']['back_test'])
 use_percent = float(conf['pytrading']['use_percent'])
 past_period = int(conf['pytrading']['past_period'])
+minimum_period = int(conf['pytrading']['minimum_period'])
 stop_limit_percent = float(conf['pytrading']['stop_limit_percent'])
 num_ranking = int(conf['pytrading']['num_ranking'])
