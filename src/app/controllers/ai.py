@@ -71,7 +71,8 @@ class AI(object):
     def buy(self, candle):
         if self.back_test:
             logger.info('action=buy type=back_test status=run')
-            could_buy = self.signal_events.buy(self.product_code, candle.time, candle.close, 0.001, save=False)
+            # could_buy = self.signal_events.buy(self.product_code, candle.time, candle.close, 0.001, save=False)
+            could_buy = self.signal_events.buy(self.product_code, candle.time, candle.close, 0.001, save=True)
             return could_buy
 
         if self.start_trade > candle.time:
@@ -99,7 +100,8 @@ class AI(object):
     def sell(self, candle):
         if self.back_test:
             logger.info('action=sell type=back_test status=run')
-            could_sell = self.signal_events.sell(self.product_code, candle.time, candle.close, 0.001, save=False)
+            # could_sell = self.signal_events.sell(self.product_code, candle.time, candle.close, 0.001, save=False)
+            could_sell = self.signal_events.sell(self.product_code, candle.time, candle.close, 0.001, save=True)
             return could_sell
 
         if self.start_trade > candle.time:
@@ -128,9 +130,10 @@ class AI(object):
         if params is None:
             logger.info(f'action=trade optimized_trade_params=None candles={len(df.candles)}')
             if len(df.candles) >= settings.minimum_period:
-                self.update_optimize_params(is_continue=True)
+                self.update_optimize_params(is_continue=False)
             return
 
+        logger.info(f'action=trade params={params.__dict__}')
 
         if params.ema_enable:
             ema_values_1 = talib.EMA(np.array(df.closes), params.ema_period_1)

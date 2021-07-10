@@ -1,3 +1,4 @@
+import logging
 from dict2obj import Dict2Obj
 import numpy as np
 import talib
@@ -7,6 +8,8 @@ from app.models.events import SignalEvents
 import settings
 from utils.utils import Serializer
 from tradingalgo.algo import ichimoku_cloud
+
+logger = logging.getLogger(__name__)
 
 def nan_to_zero(values: np.asarray):
     values[np.isnan(values)] = 0
@@ -387,6 +390,7 @@ class DataFrameCandle(object):
     
     
     def optimize_params(self):
+        logger.info(f'class=DataFrameCandle action=optimize_params status=run')
         ema_performance, ema_period_1, ema_period_2 = self.optimize_ema()
         bb_performance, bb_n, bb_k = self.optimize_bb()
         ichimoku_performance = self.optimize_ichimoku()
@@ -410,7 +414,8 @@ class DataFrameCandle(object):
             if ranking.performance > 0:
                 ranking.enable = True
                 is_enable = True
-
+                
+        logger.info(f'class=DataFrameCandle action=optimize_params is_enable={is_enable}')
         if not is_enable:
             return None
 

@@ -133,12 +133,15 @@ def api_make_handler():
         df.add_macd(period_1, period_2, period_3)
 
     events = request.args.get('events')
+    # if events:
+    #     if settings.back_test:
+    #         from app.controllers.streamdata import stream
+    #         df.events = stream.ai.signal_events
+    #     else:
+    #         df.add_events(df.candles[0].time)
+
     if events:
-        if settings.back_test:
-            from app.controllers.streamdata import stream
-            df.events = stream.ai.signal_events
-        else:
-            df.add_events(df.candles[0].time)
+        df.add_events(df.candles[0].time)
 
     return jsonify(df.value), 200
 

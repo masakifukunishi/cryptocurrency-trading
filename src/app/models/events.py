@@ -69,9 +69,7 @@ class SignalEvents(object):
             self.signals = signals
 
     def can_buy(self, time):
-        logger.info('action=can_buy class=SignalEvents status=run')
         if len(self.signals) == 0:
-            logger.info('signals=null')
             return True
 
         last_signal = self.signals[-1]
@@ -81,9 +79,7 @@ class SignalEvents(object):
         return False
 
     def can_sell(self, time):
-        logger.info('action=can_sell class=SignalEvents status=run')
         if len(self.signals) == 0:
-            logger.info('signals=null')
             return False
 
         last_signal = self.signals[-1]
@@ -102,7 +98,6 @@ class SignalEvents(object):
             signal_event.save()
 
         self.signals.append(signal_event)
-        logger.info(f'action=buy class=SignalEvents status=end')
         return True
 
     def sell(self, product_code, time, price, size, save):
@@ -115,7 +110,6 @@ class SignalEvents(object):
             signal_event.save()
 
         self.signals.append(signal_event)
-        logger.info(f'action=sell class=SignalEvents status=end')
         return True
 
     @staticmethod
