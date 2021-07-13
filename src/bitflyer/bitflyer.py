@@ -140,7 +140,8 @@ class APIClient(object):
         except Exception as e:
             logger.error(f'action=send_order error={e}')
             raise
-        resp = {'child_order_acceptance_id': 'JRF20210702-105120-972173'}
+        # resp = {'child_order_acceptance_id': 'JRF20210702-105120-972173'}
+        time.sleep(1)
         order_id = resp['child_order_acceptance_id']
         order = self.wait_order_complete(order_id)
 

@@ -98,6 +98,7 @@ class SignalEvents(object):
             signal_event.save()
 
         self.signals.append(signal_event)
+
         return True
 
     def sell(self, product_code, time, price, size, save):
@@ -110,6 +111,7 @@ class SignalEvents(object):
             signal_event.save()
 
         self.signals.append(signal_event)
+
         return True
 
     @staticmethod
