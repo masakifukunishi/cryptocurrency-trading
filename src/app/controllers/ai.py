@@ -82,6 +82,7 @@ class AI(object):
             return False
 
         if not self.signal_events.can_buy(candle.time):
+            logger.info(f'action=buy signal_events={self.signal_events.value}')
             logger.warning('action=buy status=false error=previous_was_buy')
             return False
 
@@ -111,6 +112,7 @@ class AI(object):
             return False
 
         if not self.signal_events.can_sell(candle.time):
+            logger.info(f'action=sell signal_events={self.signal_events.value}')
             logger.warning('action=sell status=false error=previous_was_sell')
             return False
 

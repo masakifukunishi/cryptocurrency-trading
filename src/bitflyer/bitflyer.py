@@ -130,6 +130,7 @@ class APIClient(object):
             time.sleep(constants.GET_TICKER_DURATION)
             
     def send_order(self, order: Order):
+        logger.info(f'action=send_order status=run time={datetime.utcnow()}')
         try:
             resp = self.client.sendchildorder(product_code=order.product_code,
                                      child_order_type=order.child_order_type,
@@ -144,7 +145,7 @@ class APIClient(object):
         time.sleep(1)
         order_id = resp['child_order_acceptance_id']
         order = self.wait_order_complete(order_id)
-
+        logger.info(f'action=send_order status=end time={datetime.utcnow()}')
         if not order:
             logger.error('action=send_order error=timeout')
             raise OrderTimeoutError
@@ -164,6 +165,7 @@ class APIClient(object):
                 return None
 
     def get_order(self, order_id) -> Order:
+        logger.info(f'action=get_order status=run product_code={settings.product_code} child_order_acceptance_id={order_id}')
         try:
             resp = self.client.getchildorders(product_code=settings.product_code,
                                      child_order_acceptance_id=order_id)
@@ -215,7 +217,7 @@ class RealtimeAPI(object):
     def on_error(self, ws, error, _="", __ =""):
         logger.error(error)
         self.disconnect()
-        time.sleep(0.5)
+        time.sleep(2)
         self.connect()
 
     # when websocket closed.

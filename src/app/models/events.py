@@ -92,8 +92,7 @@ class SignalEvents(object):
         if not self.can_buy(time):
             return False
 
-        signal_event = SignalEvent(
-            time=time, product_code=product_code, side=constants.BUY, price=price, size=size)
+        signal_event = SignalEvent(time=time, product_code=product_code, side=constants.BUY, price=price, size=size)
         if save:
             signal_event.save()
 
@@ -105,8 +104,7 @@ class SignalEvents(object):
         if not self.can_sell(time):
             return False
 
-        signal_event = SignalEvent(
-            time=time, product_code=product_code, side=constants.SELL, price=price, size=size)
+        signal_event = SignalEvent(time=time, product_code=product_code, side=constants.SELL, price=price, size=size)
         if save:
             signal_event.save()
 
