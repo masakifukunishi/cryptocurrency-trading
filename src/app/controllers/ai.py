@@ -48,7 +48,7 @@ class AI(object):
         self.stop_limit = 0
         self.stop_limit_percent = stop_limit_percent
         self.back_test = back_test
-        self.start_trade = datetime.datetime.utcnow()
+        self.start_trade = None
         self.candle_cls = factory_candle_class(self.product_code, self.duration)
         self.update_optimize_params(False)
         self.decimal_point = 3
@@ -76,9 +76,9 @@ class AI(object):
             return could_buy
 
         if self.start_trade > candle.time:
-            logger.warning('action=buy status=false error=old_time')
-            logger.warning(f'start_trade={self.start_trade}')
-            logger.warning(f'candle_time={candle.time}')
+            # logger.warning('action=buy status=false error=old_time')
+            # logger.warning(f'start_trade={self.start_trade}')
+            # logger.warning(f'candle_time={candle.time}')
             return False
 
         if not self.signal_events.can_buy(candle.time):
@@ -106,9 +106,9 @@ class AI(object):
             return could_sell
 
         if self.start_trade > candle.time:
-            logger.warning('action=sell status=false error=old_time')
-            logger.warning(f'start_trade={self.start_trade}')
-            logger.warning(f'candle_time={candle.time}')
+            # logger.warning('action=sell status=false error=old_time')
+            # logger.warning(f'start_trade={self.start_trade}')
+            # logger.warning(f'candle_time={candle.time}')
             return False
 
         if not self.signal_events.can_sell(candle.time):
@@ -132,6 +132,7 @@ class AI(object):
         if params is None:
             logger.info(f'action=trade optimized_trade_params=None candles={len(df.candles)}')
             if len(df.candles) >= settings.minimum_period:
+                self.start_trade = datetime.datetime.utcnow()
                 self.update_optimize_params(is_continue=False)
             return
 
