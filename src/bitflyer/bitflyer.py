@@ -118,6 +118,7 @@ class APIClient(object):
                 resp = self.client.ticker(product_code=product_code)
             except Exception as e:
                 logger.error(f'action=get_realtime_ticker error={e}')
+                time.sleep(1.5)
                 continue
             timestamp = datetime.timestamp(
                 dateutil.parser.parse(resp['timestamp']))
