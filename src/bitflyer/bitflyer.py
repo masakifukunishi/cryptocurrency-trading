@@ -118,7 +118,7 @@ class APIClient(object):
                 resp = self.client.ticker(product_code=product_code)
             except Exception as e:
                 logger.error(f'action=get_realtime_ticker error={e}')
-                raise
+                continue
             timestamp = datetime.timestamp(
                 dateutil.parser.parse(resp['timestamp']))
             product_code = resp['product_code']
@@ -127,7 +127,7 @@ class APIClient(object):
             volume = float(resp['volume'])
             ticker = Ticker(product_code, timestamp, bid, ask, volume)
             callback(ticker)
-            time.sleep(constants.GET_TICKER_DURATION)
+            time.sleep(settings.get_ticker_duration)
             
     def send_order(self, order: Order):
         logger.info(f'action=send_order status=run time={datetime.utcnow()}')
@@ -191,9 +191,6 @@ class RealtimeAPI(object):
         self.channel = channel
         self.callback = callback
         self.connect()
-        #Define Websocket
-#         self.ws = websocket.WebSocketApp(self.url,header=None,on_open=self.on_open, on_message=self.on_message, on_error=self.on_error, on_close=self.on_close)
-#         websocket.enableTrace(False)
 
     def connect(self):
         self.ws = websocket.WebSocketApp(self.url,header=None,on_open=self.on_open, on_message=self.on_message, on_error=self.on_error, on_close=self.on_close)

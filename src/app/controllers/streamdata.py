@@ -13,8 +13,8 @@ import settings
 
 logger = logging.getLogger(__name__)
 
-# from bitflyer.bitflyer import APIClient
-# api = APIClient(settings.api_key, settings.api_secret)
+from bitflyer.bitflyer import APIClient
+api = APIClient(settings.api_key, settings.api_secret)
 
 
 class StreamData(object):
@@ -29,28 +29,30 @@ class StreamData(object):
             back_test=settings.back_test)
         self.trade_lock = Lock()
         
-#     def stream_ingestion_data(self):
-#         api.get_realtime_ticker(settings.product_code, callback=self.trade)
-
-#     def trade(self, ticker: Ticker):
-#         logger.info(f'action=trade ticker={ticker.__dict__}')
-#         for duration in constants.DURATIONS:
-#             is_created = create_candle_with_duration(ticker.product_code, duration, ticker)
-#             print(is_created)
-
     def stream_ingestion_data(self):
         trade_with_ai = partial(self.trade, ai=self.ai)
-        url = settings.realtime_api_end_point
-        channel = settings.realtime_ticker_product_code
-        json_rpc = RealtimeAPI(url=url, channel=channel, callback=trade_with_ai)
+        api.get_realtime_ticker(settings.product_code, callback=trade_with_ai)
 
     def trade(self, ticker: Ticker, ai: AI):
-        # logger.info(f'action=trade ticker={ticker.__dict__}')
         for duration in constants.DURATIONS:
             is_created = create_candle_with_duration(ticker.product_code, duration, ticker)
             if is_created and duration == settings.trade_duration:
                 thread = Thread(target=self._trade, args=(ai,))
                 thread.start()
+
+    # def stream_ingestion_data(self):
+    #     trade_with_ai = partial(self.trade, ai=self.ai)
+    #     url = settings.realtime_api_end_point
+    #     channel = settings.realtime_ticker_product_code
+    #     json_rpc = RealtimeAPI(url=url, channel=channel, callback=trade_with_ai)
+
+    # def trade(self, ticker: Ticker, ai: AI):
+    #     # logger.info(f'action=trade ticker={ticker.__dict__}')
+    #     for duration in constants.DURATIONS:
+    #         is_created = create_candle_with_duration(ticker.product_code, duration, ticker)
+    #         if is_created and duration == settings.trade_duration:
+    #             thread = Thread(target=self._trade, args=(ai,))
+    #             thread.start()
 
     def _trade(self, ai: AI):
         with self.trade_lock:
