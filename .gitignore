@@ -1,5 +1,4 @@
 # jupyter
-main.ipynb
 __pycache__
 .ipynb_checkpoints
 
@@ -7,3 +6,6 @@ __pycache__
 src/cryptocurrency_data.sql
 # env
 settings.ini
+
+# log
+*.log
