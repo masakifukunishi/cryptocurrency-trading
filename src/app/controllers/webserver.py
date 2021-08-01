@@ -133,15 +133,15 @@ def api_make_handler():
         df.add_macd(period_1, period_2, period_3)
 
     events = request.args.get('events')
-    # if events:
-    #     if settings.back_test:
-    #         from app.controllers.streamdata import stream
-    #         df.events = stream.ai.signal_events
-    #     else:
-    #         df.add_events(df.candles[0].time)
-
     if events:
-        df.add_events(df.candles[0].time)
+        if self.environment == constants.ENVIRONMENT_DEV:
+            from app.controllers.streamdata import stream
+            df.events = stream.ai.signal_events
+        elif environment == constants.ENVIRONMENT_STAGING or environment == constants.ENVIRONMENT_PRODUCTION:
+            df.add_events(df.candles[0].time)
+
+    # if events:
+    #     df.add_events(df.candles[0].time)
 
     return jsonify(df.value), 200
 

@@ -32,15 +32,13 @@ def duration_seconds(duration: str) -> int:
 
 class AI(object):
 
-    def __init__(self, product_code, use_percent, duration, past_period, stop_limit_percent, back_test):
+    def __init__(self, product_code, use_percent, duration, past_period, stop_limit_percent, environment):
         self.API = APIClient(settings.api_key, settings.api_secret)
 
-        # if back_test:
-        #     self.signal_events = SignalEvents()
-        # else:
-        #     self.signal_events = SignalEvents.get_signal_events_by_count(1)
-
-        self.signal_events = SignalEvents.get_signal_events_by_count(1)
+        if environment == constants.ENVIRONMENT_DEV:
+            self.signal_events = SignalEvents()
+        elif environment == constants.ENVIRONMENT_STAGING or environment == constants.ENVIRONMENT_PRODUCTION:
+            self.signal_events = SignalEvents.get_signal_events_by_count(1)
 
         self.product_code = product_code
         self.use_percent = use_percent
@@ -49,7 +47,7 @@ class AI(object):
         self.optimized_trade_params = None
         self.stop_limit = 0
         self.stop_limit_percent = stop_limit_percent
-        self.back_test = back_test
+        self.environment = environment
         self.start_trade = None
         self.candle_cls = factory_candle_class(self.product_code, self.duration)
         self.update_optimize_params(False)
@@ -71,6 +69,12 @@ class AI(object):
             self.update_optimize_params(is_continue)
 
     def buy(self, candle):
+        # dev
+        if self.environment == constants.ENVIRONMENT_DEV:
+            logger.info(f'action=buy environment={self.environment} status=run')
+            could_buy = self.signal_events.buy(self.product_code, candle.time, candle.close, 0.01, save=False)
+            return could_buy
+
         if self.start_trade > candle.time:
             # logger.warning('action=buy status=false error=old_time')
             # logger.warning(f'start_trade={self.start_trade}')
@@ -81,26 +85,34 @@ class AI(object):
             # logger.info(f'action=buy signal_events={self.signal_events.value}')
             logger.warning('action=buy status=false error=previous_was_buy')
             return False
-
-        if self.back_test:
-            logger.info('action=buy type=back_test status=run')
-            # could_buy = self.signal_events.buy(self.product_code, candle.time, candle.close, 0.01, save=False)
+            
+        # staging
+        if self.environment == constants.ENVIRONMENT_STAGING:
+            logger.info(f'action=buy environment={self.environment} status=run')
             could_buy = self.signal_events.buy(self.product_code, candle.time, candle.close, 0.01, save=True)
             return could_buy
 
-        balance = self.API.get_balance_jpy()
-        available = float(balance.available * self.use_percent)
-        ticker = self.API.get_ticker(settings.product_code)
-        ask = ticker.ask
-        size = available / ask
-        size = math.floor(size * 10 ** self.decimal_point) / (10 ** self.decimal_point)
-        order = Order(self.product_code, constants.BUY, size)
-        resp = self.API.send_order(order)
-        logger.info(f'action=buy responce={resp}')
-        could_buy = self.signal_events.buy(self.product_code, candle.time, resp.price, resp.size, save=True)
-        return could_buy
+        # production
+        if self.environment == constants.ENVIRONMENT_PRODUCTION:
+            balance = self.API.get_balance_jpy()
+            available = float(balance.available * self.use_percent)
+            ticker = self.API.get_ticker(settings.product_code)
+            ask = ticker.ask
+            size = available / ask
+            size = math.floor(size * 10 ** self.decimal_point) / (10 ** self.decimal_point)
+            order = Order(self.product_code, constants.BUY, size)
+            resp = self.API.send_order(order)
+            logger.info(f'action=buy responce={resp}')
+            could_buy = self.signal_events.buy(self.product_code, candle.time, resp.price, resp.size, save=True)
+            return could_buy
 
     def sell(self, candle):
+        # dev
+        if self.environment == constants.ENVIRONMENT_DEV:
+            logger.info(f'action=sell environment={self.environment} status=run')
+            could_sell = self.signal_events.sell(self.product_code, candle.time, candle.close, 0.01, save=False)
+            return could_sell
+
         if self.start_trade > candle.time:
             # logger.warning('action=sell status=false error=old_time')
             # logger.warning(f'start_trade={self.start_trade}')
@@ -112,19 +124,21 @@ class AI(object):
             logger.warning('action=sell status=false error=previous_was_sell')
             return False
 
-        if self.back_test:
-            logger.info('action=sell type=back_test status=run')
-            # could_sell = self.signal_events.sell(self.product_code, candle.time, candle.close, 0.01, save=False)
+        # staging
+        if self.environment == constants.ENVIRONMENT_STAGING:
+            logger.info(f'action=sell environment={self.environment} status=run')
             could_sell = self.signal_events.sell(self.product_code, candle.time, candle.close, 0.01, save=True)
             return could_sell
-
-        balance = self.API.get_balance_btc()
-        size = math.floor(balance.available * 10 ** self.decimal_point) / (10 ** self.decimal_point)
-        order = Order(self.product_code, constants.SELL, size)
-        resp = self.API.send_order(order)
-        logger.info(f'action=sell responce={resp}')
-        could_sell = self.signal_events.sell(self.product_code, candle.time, resp.price, resp.size, save=True)
-        return could_sell
+            
+        # production
+        if self.environment == constants.ENVIRONMENT_PRODUCTION:
+            balance = self.API.get_balance_btc()
+            size = math.floor(balance.available * 10 ** self.decimal_point) / (10 ** self.decimal_point)
+            order = Order(self.product_code, constants.SELL, size)
+            resp = self.API.send_order(order)
+            logger.info(f'action=sell responce={resp}')
+            could_sell = self.signal_events.sell(self.product_code, candle.time, resp.price, resp.size, save=True)
+            return could_sell
 
     def trade(self):
         logger.info('action=trade status=run')

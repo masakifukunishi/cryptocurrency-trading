@@ -26,7 +26,7 @@ class StreamData(object):
             duration=settings.trade_duration,
             past_period=settings.past_period,
             stop_limit_percent=settings.stop_limit_percent,
-            back_test=settings.back_test)
+            environment=settings.environment)
         self.trade_lock = Lock()
         
 #     def stream_ingestion_data(self):
