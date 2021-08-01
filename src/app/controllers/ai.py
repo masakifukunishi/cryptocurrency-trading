@@ -35,10 +35,12 @@ class AI(object):
     def __init__(self, product_code, use_percent, duration, past_period, stop_limit_percent, back_test):
         self.API = APIClient(settings.api_key, settings.api_secret)
 
-        if back_test:
-            self.signal_events = SignalEvents()
-        else:
-            self.signal_events = SignalEvents.get_signal_events_by_count(1)
+        # if back_test:
+        #     self.signal_events = SignalEvents()
+        # else:
+        #     self.signal_events = SignalEvents.get_signal_events_by_count(1)
+
+        self.signal_events = SignalEvents.get_signal_events_by_count(1)
 
         self.product_code = product_code
         self.use_percent = use_percent
@@ -69,12 +71,6 @@ class AI(object):
             self.update_optimize_params(is_continue)
 
     def buy(self, candle):
-        if self.back_test:
-            logger.info('action=buy type=back_test status=run')
-            # could_buy = self.signal_events.buy(self.product_code, candle.time, candle.close, 0.001, save=False)
-            could_buy = self.signal_events.buy(self.product_code, candle.time, candle.close, 0.001, save=True)
-            return could_buy
-
         if self.start_trade > candle.time:
             # logger.warning('action=buy status=false error=old_time')
             # logger.warning(f'start_trade={self.start_trade}')
@@ -85,6 +81,12 @@ class AI(object):
             # logger.info(f'action=buy signal_events={self.signal_events.value}')
             logger.warning('action=buy status=false error=previous_was_buy')
             return False
+
+        if self.back_test:
+            logger.info('action=buy type=back_test status=run')
+            # could_buy = self.signal_events.buy(self.product_code, candle.time, candle.close, 0.01, save=False)
+            could_buy = self.signal_events.buy(self.product_code, candle.time, candle.close, 0.01, save=True)
+            return could_buy
 
         balance = self.API.get_balance_jpy()
         available = float(balance.available * self.use_percent)
@@ -99,12 +101,6 @@ class AI(object):
         return could_buy
 
     def sell(self, candle):
-        if self.back_test:
-            logger.info('action=sell type=back_test status=run')
-            # could_sell = self.signal_events.sell(self.product_code, candle.time, candle.close, 0.001, save=False)
-            could_sell = self.signal_events.sell(self.product_code, candle.time, candle.close, 0.001, save=True)
-            return could_sell
-
         if self.start_trade > candle.time:
             # logger.warning('action=sell status=false error=old_time')
             # logger.warning(f'start_trade={self.start_trade}')
@@ -115,6 +111,12 @@ class AI(object):
             logger.info(f'action=sell signal_events={self.signal_events.value}')
             logger.warning('action=sell status=false error=previous_was_sell')
             return False
+
+        if self.back_test:
+            logger.info('action=sell type=back_test status=run')
+            # could_sell = self.signal_events.sell(self.product_code, candle.time, candle.close, 0.01, save=False)
+            could_sell = self.signal_events.sell(self.product_code, candle.time, candle.close, 0.01, save=True)
+            return could_sell
 
         balance = self.API.get_balance_btc()
         size = math.floor(balance.available * 10 ** self.decimal_point) / (10 ** self.decimal_point)
