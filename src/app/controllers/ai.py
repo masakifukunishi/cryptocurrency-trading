@@ -36,7 +36,8 @@ class AI(object):
         self.API = APIClient(settings.api_key, settings.api_secret)
 
         if environment == constants.ENVIRONMENT_DEV:
-            self.signal_events = SignalEvents()
+            # self.signal_events = SignalEvents()
+            self.signal_events = SignalEvents.get_signal_events_by_count(1)
         elif environment == constants.ENVIRONMENT_STAGING or environment == constants.ENVIRONMENT_PRODUCTION:
             self.signal_events = SignalEvents.get_signal_events_by_count(1)
 
@@ -72,7 +73,8 @@ class AI(object):
         # dev
         if self.environment == constants.ENVIRONMENT_DEV:
             logger.info(f'action=buy environment={self.environment} status=run')
-            could_buy = self.signal_events.buy(self.product_code, candle.time, candle.close, 0.01, save=False)
+            could_buy = self.signal_events.buy(self.product_code, candle.time, candle.close, 0.01, save=True)
+            # logger.info(f'action=buy signal_events={self.signal_events.value}')
             return could_buy
 
         if self.start_trade > candle.time:
@@ -110,7 +112,8 @@ class AI(object):
         # dev
         if self.environment == constants.ENVIRONMENT_DEV:
             logger.info(f'action=sell environment={self.environment} status=run')
-            could_sell = self.signal_events.sell(self.product_code, candle.time, candle.close, 0.01, save=False)
+            could_sell = self.signal_events.sell(self.product_code, candle.time, candle.close, 0.01, save=True)
+            # logger.info(f'action=sell signal_events={self.signal_events.value}')
             return could_sell
 
         if self.start_trade > candle.time:
@@ -120,7 +123,7 @@ class AI(object):
             return False
 
         if not self.signal_events.can_sell(candle.time):
-            logger.info(f'action=sell signal_events={self.signal_events.value}')
+            # logger.info(f'action=sell signal_events={self.signal_events.value}')
             logger.warning('action=sell status=false error=previous_was_sell')
             return False
 
@@ -129,7 +132,7 @@ class AI(object):
             logger.info(f'action=sell environment={self.environment} status=run')
             could_sell = self.signal_events.sell(self.product_code, candle.time, candle.close, 0.01, save=True)
             return could_sell
-            
+
         # production
         if self.environment == constants.ENVIRONMENT_PRODUCTION:
             balance = self.API.get_balance_btc()
