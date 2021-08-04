@@ -1,3 +1,4 @@
+from datetime import datetime
 import logging
 
 from sqlalchemy import Column
@@ -37,6 +38,14 @@ class BaseCandleMixin(object):
         except IntegrityError:
             return False
 
+    @classmethod
+    def is_exists_cnadle(cls):
+        with session_scope() as session:
+            candle = session.query(cls).first()
+        if candle is None:
+            return False
+        return True
+    
     @classmethod
     def get(cls, time):
         with session_scope() as session:
@@ -110,3 +119,24 @@ def create_candle_with_duration(product_code, duration, ticker):
     current_candle.close = price
     current_candle.save()
     return False
+
+def create_initial_candle_with_duration(product_code, duration, candles):
+    logger.info(f'action=create_initial_candle_with_duration duration={duration} status=run')
+    
+    cls = factory_candle_class(product_code, duration)
+    if cls.is_exists_cnadle():
+        logger.warning('candles already exists')
+        return False
+    
+    for candle in candles:
+        time = datetime.utcfromtimestamp(candle[0])
+        open = candle[1]
+        high = candle[2]
+        low = candle[3]
+        close = candle[4]
+        volume = candle[5]
+        cls.create(time, open, close, high, low, volume)
+    
+    logger.info(f'action=create_initial_candle_with_duration duration={duration} status=completion')
+    
+    return True
