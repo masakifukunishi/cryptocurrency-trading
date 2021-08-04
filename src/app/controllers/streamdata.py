@@ -30,14 +30,6 @@ class StreamData(object):
             stop_limit_percent=settings.stop_limit_percent,
             environment=settings.environment)
         self.trade_lock = Lock()
-
-    def set_initial_candles(self):
-        for duration in constants.DURATIONS:
-            duration_time = constants.TRADE_MAP[duration]['granularity']
-            if duration_time in constants.CRYPTOWATCH_ENABLE_PERIOD:
-                candle = Candle(duration_time)
-                candles = candle.get_candles()
-                create_initial_candle_with_duration(settings.product_code, duration, candles)
             
 #     def stream_ingestion_data(self):
 #         trade_with_ai = partial(self.trade, ai=self.ai)
@@ -45,7 +37,6 @@ class StreamData(object):
 
 
     def stream_ingestion_data(self):
-        self.set_initial_candles()
         trade_with_ai = partial(self.trade, ai=self.ai)
         url = settings.realtime_api_end_point
         channel = settings.realtime_ticker_product_code

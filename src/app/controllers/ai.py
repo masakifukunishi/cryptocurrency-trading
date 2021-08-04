@@ -33,6 +33,7 @@ def duration_seconds(duration: str) -> int:
 class AI(object):
 
     def __init__(self, product_code, use_percent, duration, past_period, stop_limit_percent, environment):
+        logger.info(f'ai initial')
         self.API = APIClient(settings.api_key, settings.api_secret)
 
         if environment == constants.ENVIRONMENT_DEV:
@@ -149,6 +150,10 @@ class AI(object):
         df.set_all_candles(self.past_period)
         params = self.optimized_trade_params
 
+#         if params is None:
+#             logger.info(f'action=trade optimized_trade_params=None')
+#             return
+        
         if params is None:
             logger.info(f'action=trade optimized_trade_params=None candles={len(df.candles)}')
             if len(df.candles) >= settings.minimum_period:
