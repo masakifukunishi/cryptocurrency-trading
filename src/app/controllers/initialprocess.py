@@ -1,8 +1,8 @@
 from cryptowatch.cryptowatch import Candle
 from app.models.candle import create_initial_candle_with_duration
 
-import constants
-import settings
+import settings.constants as constants
+import settings.settings as settings
 
 class InitialProcess(object):
     

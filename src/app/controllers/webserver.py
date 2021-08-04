@@ -7,8 +7,8 @@ sys.path.append('/src')
 
 from app.models.dfcandle import DataFrameCandle
 
-import constants
-import settings
+import settings.constants as constants
+import settings.settings as settings
 
 app = Flask(__name__, template_folder='../views')
 

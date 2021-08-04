@@ -3,7 +3,7 @@ import configparser
 from utils.utils import bool_from_str
 
 conf = configparser.ConfigParser()
-conf.read('settings.ini')
+conf.read('settings/settings.ini')
 
 api_key = conf['bitflyer']['api_key']
 api_secret = conf['bitflyer']['api_secret']

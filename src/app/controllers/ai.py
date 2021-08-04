@@ -13,8 +13,8 @@ from bitflyer.bitflyer import APIClient
 from bitflyer.bitflyer import Order
 from tradingalgo.algo import ichimoku_cloud
 
-import constants
-import settings
+import settings.constants as constants
+import settings.settings as settings
 
 logger = logging.getLogger(__name__)
 

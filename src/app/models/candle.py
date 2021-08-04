@@ -11,7 +11,7 @@ from sqlalchemy.exc import IntegrityError
 from app.models.base import Base
 from app.models.base import session_scope
 
-import constants
+import settings.constants as constants
 
 logger = logging.getLogger(__name__)
         

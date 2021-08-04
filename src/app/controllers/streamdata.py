@@ -10,8 +10,8 @@ from bitflyer.bitflyer import Ticker
 from bitflyer.bitflyer import RealtimeAPI
 from cryptowatch.cryptowatch import Candle
 
-import constants
-import settings
+import settings.constants as constants
+import settings.settings as settings
 
 logger = logging.getLogger(__name__)
 

@@ -3,11 +3,13 @@ from dict2obj import Dict2Obj
 import numpy as np
 import talib
 
+
 from app.models.candle import factory_candle_class
 from app.models.events import SignalEvents
-import settings
 from utils.utils import Serializer
 from tradingalgo.algo import ichimoku_cloud
+
+import settings.settings as settings
 
 logger = logging.getLogger(__name__)
 

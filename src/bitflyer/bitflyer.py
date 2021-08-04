@@ -8,8 +8,8 @@ import websocket
 import dateutil.parser
 import pybitflyer
 
-import constants
-import settings
+import settings.constants as constants
+import settings.settings as settings
 
 logger = logging.getLogger(__name__)
 

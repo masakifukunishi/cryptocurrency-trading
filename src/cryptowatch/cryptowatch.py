@@ -4,8 +4,8 @@ import time
 import pandas as pd
 from datetime import datetime
 
-import constants
-import settings
+import settings.constants as constants
+import settings.settings as settings
 
 logger = logging.getLogger(__name__)
 

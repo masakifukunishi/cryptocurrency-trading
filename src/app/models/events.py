@@ -11,8 +11,9 @@ from sqlalchemy import String
 
 from app.models.base import session_scope
 from app.models.base import Base
-import constants
-import settings
+
+import settings.constants as constants
+import settings.settings as settings
 
 logger = logging.getLogger(__name__)
 
