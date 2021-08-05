@@ -1,5 +1,6 @@
 from datetime import datetime
 import logging
+import time
 
 from sqlalchemy import Column
 from sqlalchemy import desc
@@ -12,6 +13,7 @@ from app.models.base import Base
 from app.models.base import session_scope
 
 import settings.constants as constants
+import settings.settings as settings
 
 logger = logging.getLogger(__name__)
         
@@ -39,6 +41,11 @@ class BaseCandleMixin(object):
             return False
 
     @classmethod
+    def delete(cls, times):
+        with session_scope() as session:
+             session.query(cls).filter(cls.time.not_in(times)).delete()
+            
+    @classmethod
     def is_exists_cnadle(cls):
         with session_scope() as session:
             candle = session.query(cls).first()
@@ -58,7 +65,7 @@ class BaseCandleMixin(object):
     def save(self):
         with session_scope() as session:
             session.add(self)
-            
+
     @classmethod
     def get_all_candles(cls, limit=100):
         with session_scope() as session:
@@ -140,3 +147,11 @@ def create_initial_candle_with_duration(product_code, duration, candles):
     logger.info(f'action=create_initial_candle_with_duration duration={duration} status=completion')
     
     return True
+
+def delete_candle(product_code, duration):
+    logger.info(f'action=delete_candle duration={duration} status=run')
+    cls = factory_candle_class(product_code, duration)
+    candles_cls = cls.get_all_candles(settings.storage_period)
+    times = [c.value["time"] for c in candles_cls]
+    cls.delete(times)
+    logger.info(f'action=delete_candle duration={duration} status=end')
