@@ -24,6 +24,12 @@ def duration_seconds(duration: str) -> int:
         return 10
     if duration == constants.DURATION_1M:
         return 60
+    if duration == constants.DURATION_3M:
+        return 60 * 3
+    if duration == constants.DURATION_5M:
+        return 60 * 5
+    if duration == constants.DURATION_15M:
+        return 60 * 15
     if duration == constants.DURATION_1H:
         return 60 * 60
     else:

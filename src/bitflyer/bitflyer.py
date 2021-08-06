@@ -39,13 +39,36 @@ class Ticker(object):
     def truncate_date_time(self, duration):
         ticker_time = self.time
         if duration == constants.DURATION_10S:
-            new_sec = math.floor(self.time.second / 10) * 10
+            ten_sec = math.floor(self.time.second / 10) * 10
             ticker_time = datetime(
                 self.time.year, self.time.month, self.time.day,
-                self.time.hour, self.time.minute, new_sec)
+                self.time.hour, self.time.minute, ten_sec)
             time_format = '%Y-%m-%d %H:%M:%S'
+
         elif duration == constants.DURATION_1M:
             time_format = '%Y-%m-%d %H:%M'
+
+        elif duration == constants.DURATION_3M:
+            three_minute = math.floor(self.time.minute / 3) * 3
+            ticker_time = datetime(
+                self.time.year, self.time.month, self.time.day,
+                self.time.hour, three_minute)
+            time_format = '%Y-%m-%d %H:%M'
+
+        elif duration == constants.DURATION_5M:
+            five_minute = math.floor(self.time.minute / 5) * 5
+            ticker_time = datetime(
+                self.time.year, self.time.month, self.time.day,
+                self.time.hour, five_minute)
+            time_format = '%Y-%m-%d %H:%M'
+
+        elif duration == constants.DURATION_15M:
+            fifteen_minute = math.floor(self.time.minute / 15) * 15
+            ticker_time = datetime(
+                self.time.year, self.time.month, self.time.day,
+                self.time.hour, fifteen_minute)
+            time_format = '%Y-%m-%d %H:%M'
+
         elif duration == constants.DURATION_1H:
             time_format = '%Y-%m-%d %H'
         else:
