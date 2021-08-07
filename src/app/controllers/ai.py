@@ -79,7 +79,6 @@ class AI(object):
     def buy(self, candle):
         # dev
         if self.environment == constants.ENVIRONMENT_DEV:
-            logger.info(f'action=buy environment={self.environment} status=run')
             could_buy = self.signal_events.buy(self.product_code, candle.time, candle.close, 0.01, save=True)
             # logger.info(f'action=buy signal_events={self.signal_events.value}')
             return could_buy
@@ -97,7 +96,6 @@ class AI(object):
             
         # staging
         if self.environment == constants.ENVIRONMENT_STAGING:
-            logger.info(f'action=buy environment={self.environment} status=run')
             could_buy = self.signal_events.buy(self.product_code, candle.time, candle.close, 0.01, save=True)
             return could_buy
 
@@ -118,7 +116,6 @@ class AI(object):
     def sell(self, candle):
         # dev
         if self.environment == constants.ENVIRONMENT_DEV:
-            logger.info(f'action=sell environment={self.environment} status=run')
             could_sell = self.signal_events.sell(self.product_code, candle.time, candle.close, 0.01, save=True)
             # logger.info(f'action=sell signal_events={self.signal_events.value}')
             return could_sell
@@ -136,7 +133,6 @@ class AI(object):
 
         # staging
         if self.environment == constants.ENVIRONMENT_STAGING:
-            logger.info(f'action=sell environment={self.environment} status=run')
             could_sell = self.signal_events.sell(self.product_code, candle.time, candle.close, 0.01, save=True)
             return could_sell
 
@@ -185,24 +181,24 @@ class AI(object):
 
         for i in range(1, len(df.candles)):
             buy_point, sell_point = 0, 0
-
+            trade_log = ''
             if params.ema_enable and params.ema_period_1 <= i and params.ema_period_2 <= i:
                 if ema_values_1[i - 1] < ema_values_2[i - 1] and ema_values_1[i] >= ema_values_2[i]:
                     buy_point += 1
-                    logger.info(f'action=trade side=buy indicator=ema period_1={params.ema_period_1} period_2={params.ema_period_2}')
+                    trade_log += f'action=trade side=buy indicator=ema period_1={params.ema_period_1} period_2={params.ema_period_2}\n'
 
                 if ema_values_1[i - 1] > ema_values_2[i - 1] and ema_values_1[i] <= ema_values_2[i]:
                     sell_point += 1
-                    logger.info(f'action=trade side=sell indicator=ema period_1={params.ema_period_1} period_2={params.ema_period_2}')
+                    trade_log += f'action=trade side=sell indicator=ema period_1={params.ema_period_1} period_2={params.ema_period_2}\n'
 
             if params.bb_enable and params.bb_n <= i:
                 if bb_down[i - 1] > df.candles[i - 1].close and bb_down[i] <= df.candles[i].close:
                     buy_point += 1
-                    logger.info(f'action=trade side=buy indicator=bb n={params.bb_n} k={params.bb_k}')
+                    trade_log += f'action=trade side=buy indicator=bb n={params.bb_n} k={params.bb_k}\n'
 
                 if bb_up[i - 1] < df.candles[i - 1].close and bb_up[i] >= df.candles[i].close:
                     sell_point += 1
-                    logger.info(f'action=trade side=sell indicator=bb n={params.bb_n} k={params.bb_k}')
+                    trade_log += f'action=trade side=sell indicator=bb n={params.bb_n} k={params.bb_k}\n'
 
             if params.ichimoku_enable:
                 if (chikou[i-1] < df.candles[i-1].high and
@@ -211,7 +207,7 @@ class AI(object):
                         senkou_b[i] < df.candles[i].low and
                         tenkan[i] > kijun[i]):
                     buy_point += 1
-                    logger.info('action=trade side=buy indicator=ichimoku')
+                    trade_log += 'action=trade side=buy indicator=ichimoku\n'
 
                 if (chikou[i - 1] > df.candles[i - 1].low and
                         chikou[i] <= df.candles[i].low and
@@ -219,31 +215,32 @@ class AI(object):
                         senkou_b[i] > df.candles[i].high and
                         tenkan[i] < kijun[i]):
                     sell_point += 1
-                    logger.info('action=trade side=sell indicator=ichimoku')
+                    trade_log += 'action=trade side=sell indicator=ichimoku\n'
 
             if params.rsi_enable and rsi_values[i-1] != 0 and rsi_values[i-1] != 100:
                 if rsi_values[i-1] < params.rsi_buy_thread and rsi_values[i] >= params.rsi_buy_thread:
                     buy_point += 1
-                    logger.info(f'action=trade side=buy indicator=rsi period={params.rsi_period} buy_thread={params.rsi_buy_thread}')
+                    trade_log += f'action=trade side=buy indicator=rsi period={params.rsi_period} buy_thread={params.rsi_buy_thread}\n'
 
                 if rsi_values[i-1] > params.rsi_sell_thread and rsi_values[i] <= params.rsi_sell_thread:
                     sell_point += 1
-                    logger.info(f'action=trade side=sell indicator=rsi period={params.rsi_period} sell_thread={params.rsi_sell_thread}')
+                    trade_log += f'action=trade side=sell indicator=rsi period={params.rsi_period} sell_thread={params.rsi_sell_thread}\n'
 
             if params.macd_enable:
                 if macd[i] < 0 and macd_signal[i] < 0 and macd[i - 1] < macd_signal[i - 1] and macd[i] >= macd_signal[i]:
                     buy_point += 1
-                    logger.info(f'action=trade side=buy indicator=macd fast_period={params.macd_fast_period} slow_period={params.macd_slow_period} signal_period={params.macd_signal_period}')
+                    trade_log += f'action=trade side=buy indicator=macd fast_period={params.macd_fast_period} slow_period={params.macd_slow_period} signal_period={params.macd_signal_period}\n'
 
                 if macd[i] > 0 and macd_signal[i] > 0 and macd[i-1] > macd_signal[i - 1] and macd[i] <= macd_signal[i]:
                     sell_point += 1
-                    logger.info(f'action=trade side=sell indicator=macd fast_period={params.macd_fast_period} slow_period={params.macd_slow_period} signal_period={params.macd_signal_period}')
+                    trade_log += f'action=trade side=sell indicator=macd fast_period={params.macd_fast_period} slow_period={params.macd_slow_period} signal_period={params.macd_signal_period}\n'
 
             if buy_point > 0:
                 if not self.buy(df.candles[i]):
                     continue
 
-                logger.info(f'action=trade side=buy buy_point={buy_point} status=success')
+                logger.info(trade_log.rstrip('\n'))
+                logger.info(f'action=buy buy_point={buy_point} environment={self.environment} status=completion')
 
                 self.stop_limit = df.candles[i].close * self.stop_limit_percent
 
@@ -251,7 +248,8 @@ class AI(object):
                 if not self.sell(df.candles[i]):
                     continue
 
-                logger.info(f'action=trade side=sell sell_point={sell_point} status=success')
+                logger.info(trade_log.rstrip('\n'))
+                logger.info(f'action=sell sell_point={sell_point} environment={self.environment} status=completion')
 
                 self.stop_limit = 0.0
                 self.update_optimize_params(is_continue=True)
