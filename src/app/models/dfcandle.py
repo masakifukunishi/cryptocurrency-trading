@@ -235,8 +235,8 @@ class DataFrameCandle(object):
         best_period_1 = 7
         best_period_2 = 14
 
-        for period_1 in range(5, 15):
-            for period_2 in range(12, 20):
+        for period_1 in range(5, 12):
+            for period_2 in range(14, 22):
                 signal_events = self.back_test_ema(period_1, period_2)
                 if signal_events is None:
                     continue
