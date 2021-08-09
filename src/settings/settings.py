@@ -8,6 +8,8 @@ conf.read('settings/settings.ini')
 api_key = conf['bitflyer']['api_key']
 api_secret = conf['bitflyer']['api_secret']
 product_code = conf['bitflyer']['product_code']
+buy_currency = conf['bitflyer']['buy_currency']
+sell_currency = conf['bitflyer']['sell_currency']
 realtime_api_end_point = conf['bitflyer']['realtime_api_end_point']
 realtime_ticker_product_code = conf['bitflyer']['realtime_ticker_product_code']
 

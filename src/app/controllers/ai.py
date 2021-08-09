@@ -101,7 +101,7 @@ class AI(object):
 
         # production
         if self.environment == constants.ENVIRONMENT_PRODUCTION:
-            balance = self.API.get_balance_jpy()
+            balance = self.API.get_balance(settings.buy_currency)
             available = float(balance.available * self.use_percent)
             ticker = self.API.get_ticker(settings.product_code)
             ask = ticker.ask
@@ -138,7 +138,7 @@ class AI(object):
 
         # production
         if self.environment == constants.ENVIRONMENT_PRODUCTION:
-            balance = self.API.get_balance_btc()
+            balance = self.API.get_balance(settings.sell_currency)
             size = math.floor(balance.available * 10 ** self.decimal_point) / (10 ** self.decimal_point)
             order = Order(self.product_code, constants.SELL, size)
             resp = self.API.send_order(order)

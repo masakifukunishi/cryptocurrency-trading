@@ -100,26 +100,16 @@ class APIClient(object):
         self.api_secret = api_secret
         self.client = pybitflyer.API(api_key=api_key, api_secret=api_secret)
 
-    def get_balance_jpy(self) -> Balance:
+    def get_balance(self, currency) -> Balance:
         try:
             resp = self.client.getbalance()
+            balance = (list(filter(lambda x: x['currency_code'] == currency, resp)))[0]
         except Exception as e:
-            logger.error(f'action=get_balance_jpy error={e}')
+            logger.error(f'action=get_balance error={e}')
             raise
-        currency = resp[0]['currency_code']
-        available = resp[0]['available']
+        currency = balance['currency_code']
+        available = balance['available']
         return Balance(currency, available)
-
-    def get_balance_btc(self) -> Balance:
-        try:
-            resp = self.client.getbalance()
-        except Exception as e:
-            logger.error(f'action=get_balance_btc error={e}')
-            raise
-        currency = resp[1]['currency_code']
-        available = resp[1]['available']
-        return Balance(currency, available)
-    
 
     def get_ticker(self, product_code) -> Ticker:
         try:
