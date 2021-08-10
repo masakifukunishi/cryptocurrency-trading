@@ -168,7 +168,7 @@ class APIClient(object):
 
     def wait_order_complete(self, order_id) -> Order:
         count = 0
-        timeout_count = 5
+        timeout_count = 8
         while True:
             order = self.get_order(order_id)
             if order.child_order_state == ORDER_COMPLETED:
@@ -208,13 +208,13 @@ class RealtimeAPI(object):
 
     def connect(self):
         self.ws = websocket.WebSocketApp(self.url,header=None,on_open=self.on_open, on_message=self.on_message, on_error=self.on_error, on_close=self.on_close)
-        self.ws.keep_running = True 
+        # self.ws.keep_running = True 
         self.ws.run_forever()
         logger.info('Web Socket process ended.')
 
-    def disconnect(self):
-        self.ws.keep_running = False
-        self.ws.close()
+    # def disconnect(self):
+    #     self.ws.keep_running = False
+    #     self.ws.close()
         
     """
     Below are callback functions of websocket.
@@ -227,9 +227,13 @@ class RealtimeAPI(object):
     # when error occurs
     def on_error(self, ws, error, _="", __ =""):
         logger.error(error)
-        self.disconnect()
-        time.sleep(2)
-        self.connect()
+        if error:
+            time.sleep(2)
+            self.connect()
+        # logger.error(error)
+        # self.disconnect()
+        # time.sleep(2)
+        # self.connect()
 
     # when websocket closed.
     def on_close(self, ws):
