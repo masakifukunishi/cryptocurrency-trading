@@ -139,7 +139,8 @@ class AI(object):
         # production
         if self.environment == constants.ENVIRONMENT_PRODUCTION:
             balance = self.API.get_balance(settings.sell_currency)
-            size = math.floor(balance.available * 10 ** self.decimal_point) / (10 ** self.decimal_point)
+            available = balance.available - balance.available * settings.commission_percentage
+            size = math.floor(available * 10 ** self.decimal_point) / (10 ** self.decimal_point)
             order = Order(self.product_code, constants.SELL, size)
             resp = self.API.send_order(order)
             logger.info(f'action=sell responce={resp}')

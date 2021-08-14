@@ -12,6 +12,7 @@ buy_currency = conf['bitflyer']['buy_currency']
 sell_currency = conf['bitflyer']['sell_currency']
 realtime_api_end_point = conf['bitflyer']['realtime_api_end_point']
 realtime_ticker_product_code = conf['bitflyer']['realtime_ticker_product_code']
+commission_percentage = float(conf['bitflyer']['commission_percentage'])
 
 bitflyer_btcjpy_ohlc_url = conf['cryptowatch']['bitflyer_btcjpy_ohlc_url']
 
