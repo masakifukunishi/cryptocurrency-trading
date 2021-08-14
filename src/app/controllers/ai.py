@@ -109,6 +109,9 @@ class AI(object):
             size = math.floor(size * 10 ** self.decimal_point) / (10 ** self.decimal_point)
             order = Order(self.product_code, constants.BUY, size)
             resp = self.API.send_order(order)
+            if not resp:
+                logger.error(f'action=buy status=error responce={resp}')
+                return False
             logger.info(f'action=buy responce={resp}')
             could_buy = self.signal_events.buy(self.product_code, candle.time, resp.price, resp.size, save=True)
             return could_buy
@@ -143,6 +146,9 @@ class AI(object):
             size = math.floor(available * 10 ** self.decimal_point) / (10 ** self.decimal_point)
             order = Order(self.product_code, constants.SELL, size)
             resp = self.API.send_order(order)
+            if not resp:
+                logger.error(f'action=buy status=error responce={resp}')
+                return False
             logger.info(f'action=sell responce={resp}')
             could_sell = self.signal_events.sell(self.product_code, candle.time, resp.price, resp.size, save=True)
             return could_sell

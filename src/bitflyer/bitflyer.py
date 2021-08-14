@@ -144,6 +144,10 @@ class APIClient(object):
             time.sleep(settings.get_ticker_duration)
             
     def send_order(self, order: Order):
+        now = datetime.utcnow().strftime("%H:%M")
+        if settings.maintenance_start_time <= now <= settings.maintenance_end_time:
+            logger.warning(f'action=send_order time={now} : During maintenance')
+            return False
         logger.info(f'action=send_order status=run time={datetime.utcnow()}')
         try:
             resp = self.client.sendchildorder(product_code=order.product_code,

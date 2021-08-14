@@ -13,6 +13,8 @@ sell_currency = conf['bitflyer']['sell_currency']
 realtime_api_end_point = conf['bitflyer']['realtime_api_end_point']
 realtime_ticker_product_code = conf['bitflyer']['realtime_ticker_product_code']
 commission_percentage = float(conf['bitflyer']['commission_percentage'])
+maintenance_start_time = conf['bitflyer']['maintenance_start_time']
+maintenance_end_time = conf['bitflyer']['maintenance_end_time']
 
 bitflyer_btcjpy_ohlc_url = conf['cryptowatch']['bitflyer_btcjpy_ohlc_url']
 
