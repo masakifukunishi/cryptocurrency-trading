@@ -10,8 +10,8 @@ services:
       - "58888:8888"
     volumes:
       - "./src:/src"
-    command: "jupyter lab --no-browser --ip=0.0.0.0 --allow-root --NotebookApp.token=''"
-    # command: "jupyter lab --no-browser --ip=0.0.0.0 --allow-root"
+    command: "jupyter lab --no-browser --ip=0.0.0.0 --allow-root"
+    # command: "jupyter lab --no-browser --ip=0.0.0.0 --allow-root --NotebookApp.token=''"
   flask:
     container_name: cryptocurrency-trading_flask
     platform: linux/amd64
