@@ -6,8 +6,9 @@ from app.controllers.streamdata import stream
 from app.controllers.initialprocess import InitialProcess
 from app.controllers.dataprocess import DataProcess
 
-logging.basicConfig(filename="console.log",level=logging.INFO)
-# logging.basicConfig(level=logging.INFO, stream=sys.stdout)
+format = "%(asctime)s %(levelname)s %(name)s :%(message)s"
+logging.basicConfig(filename="console.log",level=logging.INFO, format=format)
+# logging.basicConfig(level=logging.INFO, stream=sys.stdout, format=format)
 
 
 if __name__ == "__main__":
@@ -30,8 +31,8 @@ if __name__ == "__main__":
 # from app.controllers.initialprocess import InitialProcess
 # from app.controllers.dataprocess import DataProcess
 
-# logging.basicConfig(filename="console.log",level=logging.INFO)
-# # logging.basicConfig(level=logging.INFO, stream=sys.stdout)
+# logging.basicConfig(filename="console.log",level=logging.INFO, format=format)
+# # logging.basicConfig(level=logging.INFO, stream=sys.stdout, format=format)
 
 
 # if __name__ == "__main__":
