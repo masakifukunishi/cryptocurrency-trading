@@ -25,6 +25,7 @@ class SignalEvent(Base):
     side = Column(String)
     price = Column(Float)
     size = Column(Float)
+    indicator = Column(String)
 
     def save(self):
         with session_scope() as session:
@@ -38,6 +39,7 @@ class SignalEvent(Base):
             'side': self.side,
             'price': self.price,
             'size': self.size,
+            'indicator': self.indicator,
         })
         if not dict_values:
             return None
@@ -89,11 +91,11 @@ class SignalEvents(object):
 
         return False
 
-    def buy(self, product_code, time, price, size, save):
+    def buy(self, product_code, time, price, size, indicator, save):
         if not self.can_buy(time):
             return False
 
-        signal_event = SignalEvent(time=time, product_code=product_code, side=constants.BUY, price=price, size=size)
+        signal_event = SignalEvent(time=time, product_code=product_code, side=constants.BUY, price=price, size=size, indicator=indicator)
         if save:
             signal_event.save()
 
@@ -101,11 +103,11 @@ class SignalEvents(object):
 
         return True
 
-    def sell(self, product_code, time, price, size, save):
+    def sell(self, product_code, time, price, size, indicator, save):
         if not self.can_sell(time):
             return False
 
-        signal_event = SignalEvent(time=time, product_code=product_code, side=constants.SELL, price=price, size=size)
+        signal_event = SignalEvent(time=time, product_code=product_code, side=constants.SELL, price=price, size=size, indicator=indicator)
         if save:
             signal_event.save()
 
