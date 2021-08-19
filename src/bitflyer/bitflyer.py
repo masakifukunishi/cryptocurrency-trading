@@ -172,10 +172,10 @@ class APIClient(object):
 
     def wait_order_complete(self, order_id) -> Order:
         count = 0
-        timeout_count = 8
+        timeout_count = 20
         while True:
             order = self.get_order(order_id)
-            if order.child_order_state == ORDER_COMPLETED:
+            if order and order.child_order_state == ORDER_COMPLETED:
                 return order
             time.sleep(1)
             count += 1
@@ -191,6 +191,10 @@ class APIClient(object):
         except Exception as e:
             logger.error(f'action=get_order error={e}')
             raise
+
+        if not resp:
+            return resp
+            
         order = Order(
             product_code=resp[0]['product_code'],
             side=resp[0]['side'],
