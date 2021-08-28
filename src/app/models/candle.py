@@ -150,7 +150,8 @@ def create_initial_candle_with_duration(product_code, duration, candles):
         return False
     
     for candle in candles:
-        time = datetime.utcfromtimestamp(candle[0])
+        time = datetime.fromtimestamp(candle[0])
+        print(time)
         open = candle[1]
         high = candle[2]
         low = candle[3]

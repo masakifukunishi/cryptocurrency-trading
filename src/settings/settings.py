@@ -15,6 +15,14 @@ bitflyer_maintenance_end_time = conf['bitflyer']['maintenance_end_time']
 
 bitflyer_btcjpy_ohlc_url = conf['cryptowatch']['bitflyer_btcjpy_ohlc_url']
 
+gmo_api_key = conf['gmo']['api_key']
+gmo_api_secret = conf['gmo']['api_secret']
+gmo_public_end_point = conf['gmo']['public_end_point']
+gmo_private_end_point = conf['gmo']['private_end_point']
+gmo_kline_path = conf['gmo']['kline_path']
+gmo_margin_path = conf['gmo']['margin_path']
+gmo_realtime_api_end_point = conf['gmo']['realtime_api_end_point']
+
 product_code = conf['currency']['product_code']
 buy_currency = conf['currency']['buy_currency']
 sell_currency = conf['currency']['sell_currency']

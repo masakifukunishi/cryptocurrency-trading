@@ -1,19 +1,17 @@
-from datetime import datetime
+from datetime import datetime, timedelta
+import requests
+import json
+import pytz
 import logging
-import math
-import time
 import json
 import websocket
 
-import dateutil.parser
-import pybitflyer
+from app.models.candle import create_initial_candle_with_duration
 
 import settings.constants as constants
 import settings.settings as settings
 
 logger = logging.getLogger(__name__)
-
-ORDER_COMPLETED = 'COMPLETED'
 
 class Balance(object):
     def __init__(self, currency, available):
@@ -98,7 +96,59 @@ class APIClient(object):
     def __init__(self, api_key, api_secret):
         self.api_key = api_key
         self.api_secret = api_secret
-        self.client = pybitflyer.API(api_key=api_key, api_secret=api_secret)
+        self.public_end_point = settings.gmo_public_end_point
+
+    def set_initial_candles(self):
+        for duration in constants.DURATIONS:
+            duration_time = constants.TRADE_MAP[duration]['granularity']
+            if duration_time in constants.CRYPTOWATCH_ENABLE_PERIOD:
+                candles = self.get_initial_candles()
+                create_initial_candle_with_duration(settings.product_code, duration, candles)
+        logger.info(f'action=set_initial_candles status=end')
+
+    def get_initial_candles(self):
+        try:
+            candles = []
+            now = datetime.now(pytz.timezone('Asia/Tokyo'))
+            # get data for the last 10 days
+            for num in range(10):
+                target_date = (now - timedelta(days=num)).strftime("%Y%m%d")
+                path = settings.gmo_kline_path.format(currency=settings.sell_currency,
+                                                    duration=settings.trade_duration, 
+                                                    date=target_date)
+                response = requests.get(self.public_end_point + path)
+                candles.extend(response.json()['data'])
+
+            sorted_candles = sorted(candles, key=lambda x: x['openTime'])
+            sorted_candles = sorted_candles[-settings.initial_period:]
+            list_candles = list(map(lambda x:[int(x["openTime"])/1000, x["open"], x["high"], x["low"], x["close"], x["volume"]], sorted_candles))
+            logger.info(f'action=get_initial_candles status=end')
+        except Exception as e:
+            logger.error(f'action=get_balance error={e}')
+            raise
+        return list_candles
+
+    def get_balance(self, currency) -> Balance:
+        apiKey    = 'YOUR_API_KEY'
+        secretKey = 'YOUR_SECRET_KEY'
+
+        timestamp = '{0}000'.format(int(time.mktime(datetime.now().timetuple())))
+        method    = 'GET'
+        endPoint  = 'https://api.coin.z.com/private'
+        path      = '/v1/account/margin'
+
+        text = timestamp + method + path
+        sign = hmac.new(bytes(secretKey.encode('ascii')), bytes(text.encode('ascii')), hashlib.sha256).hexdigest()
+
+        headers = {
+            "API-KEY": apiKey,
+            "API-TIMESTAMP": timestamp,
+            "API-SIGN": sign
+        }
+
+        res = requests.get(endPoint + path, headers=headers)
+        print (json.dumps(res.json(), indent=2))
+
 
     def get_balance(self, currency) -> Balance:
         try:
@@ -206,63 +256,80 @@ class APIClient(object):
         )
         return order
 
-class RealtimeAPI(object):
+# class RealtimeAPI(object):
+#     def __init__(self, url, channel, callback):
+#         self.url = url
+#         self.callback = callback
+#         self.connect()
 
-    def __init__(self, url, channel, callback):
-        self.url = url
-        self.channel = channel
-        self.callback = callback
-        self.connect()
+#     def connect(self):
+#         self.ws = websocket.WebSocketApp(self.url,header=None,on_open=self.on_open, on_message=self.on_message, on_error=self.on_error, on_close=self.on_close)
+#         self.ws.run_forever()
+#         logger.info('Web Socket process ended.')
 
-    def connect(self):
-        self.ws = websocket.WebSocketApp(self.url,header=None,on_open=self.on_open, on_message=self.on_message, on_error=self.on_error, on_close=self.on_close)
-        # self.ws.keep_running = True 
-        self.ws.run_forever()
-        logger.info('Web Socket process ended.')
+#     # when we get message
+#     def on_message(self, ws, message):
+#         print(message)
+#         resp = json.loads(message)['params']['message']
+#         self.set_realtime_ticker(resp, self.callback)
 
-    # def disconnect(self):
-    #     self.ws.keep_running = False
-    #     self.ws.close()
+# class RealtimeAPI(object):
+
+#     def __init__(self, url, channel, callback):
+#         self.url = url
+#         self.channel = channel
+#         self.callback = callback
+#         self.connect()
+
+#     def connect(self):
+#         self.ws = websocket.WebSocketApp(self.url,header=None,on_open=self.on_open, on_message=self.on_message, on_error=self.on_error, on_close=self.on_close)
+#         # self.ws.keep_running = True 
+#         self.ws.run_forever()
+#         logger.info('Web Socket process ended.')
+
+#     # def disconnect(self):
+#     #     self.ws.keep_running = False
+#     #     self.ws.close()
         
-    """
-    Below are callback functions of websocket.
-    """
-    # when we get message
-    def on_message(self, ws, message):
-        resp = json.loads(message)['params']['message']
-        self.set_realtime_ticker(resp, self.callback)
+#     """
+#     Below are callback functions of websocket.
+#     """
+#     # when we get message
+#     def on_message(self, ws, message):
+#         resp = json.loads(message)['params']['message']
+#         self.set_realtime_ticker(resp, self.callback)
 
-    # when error occurs
-    def on_error(self, ws, error, _="", __ =""):
-        logger.error(error)
-        if error:
-            time.sleep(5)
-            self.connect()
-        # logger.error(error)
-        # self.disconnect()
-        # time.sleep(2)
-        # self.connect()
+#     # when error occurs
+#     def on_error(self, ws, error, _="", __ =""):
+#         logger.error(error)
+#         if error:
+#             time.sleep(5)
+#             self.connect()
+#         # logger.error(error)
+#         # self.disconnect()
+#         # time.sleep(2)
+#         # self.connect()
 
-    # when websocket closed.
-    def on_close(self, ws):
-        logger.info('disconnected streaming server')
+#     # when websocket closed.
+#     def on_close(self, ws):
+#         logger.info('disconnected streaming server')
 
-    # when websocket opened.
-    def on_open(self, ws):
-        logger.info('connected streaming server')
-        input_data = json.dumps(
-            {'method' : 'subscribe',
-            'params' : {'channel' : self.channel}
-            }
-        )
-        ws.send(input_data)
+#     # when websocket opened.
+#     def on_open(self, ws):
+#         logger.info('connected streaming server')
+#         input_data = json.dumps(
+#             {'method' : 'subscribe',
+#             'params' : {'channel' : self.channel}
+#             }
+#         )
+#         ws.send(input_data)
         
-    def set_realtime_ticker(self, resp, callback):
-        timestamp = datetime.timestamp(
-            dateutil.parser.parse(resp['timestamp']))
-        product_code = resp['product_code']
-        bid = float(resp['best_bid'])
-        ask = float(resp['best_ask'])
-        volume = float(resp['volume'])
-        ticker = Ticker(product_code, timestamp, bid, ask, volume)
-        callback(ticker)
+#     def set_realtime_ticker(self, resp, callback):
+#         timestamp = datetime.timestamp(
+#             dateutil.parser.parse(resp['timestamp']))
+#         product_code = resp['product_code']
+#         bid = float(resp['best_bid'])
+#         ask = float(resp['best_ask'])
+#         volume = float(resp['volume'])
+#         ticker = Ticker(product_code, timestamp, bid, ask, volume)
+#         callback(ticker)
