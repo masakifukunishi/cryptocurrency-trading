@@ -40,7 +40,7 @@ class AI(object):
 
     def __init__(self, product_code, use_percent, duration, past_period, stop_limit_percent, environment):
         logger.info(f'ai initial')
-        self.API = APIClient(settings.api_key, settings.api_secret)
+        self.API = APIClient(settings.bitflyer_api_key, settings.bitflyer_api_secret)
 
         if environment == constants.ENVIRONMENT_DEV:
             # self.signal_events = SignalEvents()
@@ -142,7 +142,7 @@ class AI(object):
         # production
         if self.environment == constants.ENVIRONMENT_PRODUCTION:
             balance = self.API.get_balance(settings.sell_currency)
-            available = balance.available - balance.available * settings.commission_percentage
+            available = balance.available - balance.available * settings.bitflyer_commission_percentage
             size = math.floor(available * 10 ** self.decimal_point) / (10 ** self.decimal_point)
             order = Order(self.product_code, constants.SELL, size)
             resp = self.API.send_order(order)

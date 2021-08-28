@@ -16,7 +16,7 @@ import settings.settings as settings
 logger = logging.getLogger(__name__)
 
 from bitflyer.bitflyer import APIClient
-api = APIClient(settings.api_key, settings.api_secret)
+api = APIClient(settings.bitflyer_api_key, settings.bitflyer_api_secret)
 
 
 class StreamData(object):
@@ -38,8 +38,8 @@ class StreamData(object):
 
     def stream_ingestion_data(self):
         trade_with_ai = partial(self.trade, ai=self.ai)
-        url = settings.realtime_api_end_point
-        channel = settings.realtime_ticker_product_code
+        url = settings.bitflyer_realtime_api_end_point
+        channel = settings.bitflyer_realtime_ticker_product_code
         json_rpc = RealtimeAPI(url=url, channel=channel, callback=trade_with_ai)
 
     def trade(self, ticker: Ticker, ai: AI):

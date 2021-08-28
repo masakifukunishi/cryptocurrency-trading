@@ -145,7 +145,7 @@ class APIClient(object):
             
     def send_order(self, order: Order):
         now = datetime.utcnow().strftime("%H:%M")
-        if settings.maintenance_start_time <= now <= settings.maintenance_end_time:
+        if settings.bitflyer_maintenance_start_time <= now <= settings.bitflyer_maintenance_end_time:
             logger.warning(f'action=send_order time={now} : During maintenance')
             return False
         logger.info(f'action=send_order status=run time={datetime.utcnow()}')
@@ -236,7 +236,7 @@ class RealtimeAPI(object):
     def on_error(self, ws, error, _="", __ =""):
         logger.error(error)
         if error:
-            time.sleep(2)
+            time.sleep(5)
             self.connect()
         # logger.error(error)
         # self.disconnect()

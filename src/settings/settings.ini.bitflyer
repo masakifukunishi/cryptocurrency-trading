@@ -1,0 +1,34 @@
+[bitflyer]
+api_key = 
+api_secret = 
+realtime_api_end_point = 
+realtime_ticker_product_code = 
+commission_percentage = 0.001
+maintenance_start_time = 19:00
+maintenance_end_time = 19:09
+
+[cryptowatch]
+bitflyer_btcjpy_ohlc_url = 
+
+[currency]
+product_code = BTC_JPY
+buy_currency = JPY
+sell_currency = BTC
+
+[db]
+name = cryptocurrency_data.sql
+driver = sqlite3
+
+[trading]
+environment = dev
+trade_duration = 15m
+use_percent = 1.0
+stop_limit_percent = 0.98
+num_ranking = 3
+get_ticker_duration = 4
+execute_delete_candle_duration = 14400
+
+initial_period = 250
+past_period = 250
+minimum_period = 250
+storage_period = 250
