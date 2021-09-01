@@ -38,9 +38,9 @@ def duration_seconds(duration: str) -> int:
 
 class AI(object):
 
-    def __init__(self, product_code, use_percent, duration, past_period, stop_limit_percent, environment, fx_leverage, fx_actual_leverage):
-        logger.info(f'ai initial')
+    def __init__(self, product_code, use_percent, duration, past_period, stop_limit_percent_sell, stop_limit_percent_buy, environment, fx_leverage, fx_actual_leverage):
         self.API = APIClient(settings.gmo_api_key, settings.gmo_api_secret)
+        self.API.set_initial_candles()
 
         self.signal_events = SignalEvents.get_signal_events_by_count(1)
         self.product_code = product_code
@@ -48,8 +48,10 @@ class AI(object):
         self.duration = duration
         self.past_period = past_period
         self.optimized_trade_params = None
-        self.stop_limit = 0
-        self.stop_limit_percent = stop_limit_percent
+        self.stop_limit_buy = 0
+        self.stop_limit_sell = 0
+        self.stop_limit_percent_sell = stop_limit_percent_sell
+        self.stop_limit_percent_buy = stop_limit_percent_buy
         self.environment = environment
         self.fx_leverage = fx_leverage
         self.fx_actual_leverage = fx_actual_leverage
@@ -74,19 +76,21 @@ class AI(object):
             self.update_optimize_params(is_continue)
 
     def buy(self, candle, indicator):
+        next_order_settle_type = self.signal_events.get_next_order_settle_type()
+        if not self.signal_events.can_buy_fx(candle.time):
+            return False
+            
         if self.environment == constants.ENVIRONMENT_DEV:
             could_buy = self.signal_events.buy(product_code = self.product_code,
                                                time = candle.time,
                                                price = candle.close,
                                                size = 0.01,
+                                               settle_type = next_order_settle_type,
                                                indicator = indicator,
                                                save=True)
             return could_buy
 
         if self.start_trade > candle.time:
-            return False
-
-        if not self.signal_events.can_buy(candle.time):
             return False
             
         # staging
@@ -95,20 +99,23 @@ class AI(object):
                                                time = candle.time,
                                                price = candle.close,
                                                size = 0.01,
+                                               settle_type = next_order_settle_type,
                                                indicator = indicator,
                                                save=True)
             return could_buy
 
         # production
         if self.environment == constants.ENVIRONMENT_PRODUCTION:
-            margin = self.API.get_margin()
-            available = float(margin.available * self.use_percent)
-            ticker = self.API.get_ticker(self.product_code)
-            ask = ticker.ask
-            size = available / ask * fx_actual_leverage
-            size = math.floor(size * 10 ** self.decimal_point) / (10 ** self.decimal_point)
-            order = Order(self.product_code, constants.BUY, size)
-            resp = self.API.send_order(order)
+            if next_order_settle_type == constants.OPEN:
+                size = self.API.get_size(self.use_percent, self.decimal_point)
+                order = Order(self.product_code, constants.BUY, size)
+                resp = self.API.send_order(order)
+
+            if next_order_settle_type == constants.CLOSE:
+                last_event = self.signal_events.signals[-1]
+                position = self.API.get_open_positions(last_event.order_id)
+                resp = self.API.send_close_order(position)
+
             if not resp:
                 logger.error(f'action=buy status=error responce={resp}')
                 return False
@@ -124,20 +131,21 @@ class AI(object):
             return could_buy
 
     def sell(self, candle, indicator):
+        if not self.signal_events.can_sell_fx(candle.time):
+            return False
+        next_order_settle_type = self.signal_events.get_next_order_settle_type()
         # dev
         if self.environment == constants.ENVIRONMENT_DEV:
             could_sell = self.signal_events.sell(product_code = self.product_code,
                                                time = candle.time,
                                                price = candle.close,
                                                size = 0.01,
+                                               settle_type = next_order_settle_type,
                                                indicator = indicator,
                                                save=True)
             return could_sell
 
         if self.start_trade > candle.time:
-            return False
-
-        if not self.signal_events.can_sell(candle.time):
             return False
 
         # staging
@@ -146,15 +154,23 @@ class AI(object):
                                                time = candle.time,
                                                price = candle.close,
                                                size = 0.01,
+                                               settle_type = next_order_settle_type,
                                                indicator = indicator,
                                                save=True)
             return could_sell
 
         # production
         if self.environment == constants.ENVIRONMENT_PRODUCTION:
-            last_event = SignalEvents.get_signal_events_last()
-            position = self.API.get_open_positions(last_event.order_id)
-            resp = self.API.send_close_order(position)
+            if next_order_settle_type == constants.OPEN:
+                size = self.API.get_size(self.use_percent, self.decimal_point)
+                order = Order(self.product_code, constants.SELL, size)
+                resp = self.API.send_order(order)
+
+            if next_order_settle_type == constants.CLOSE:
+                last_event = self.signal_events.signals[-1]
+                position = self.API.get_open_positions(last_event.order_id)
+                resp = self.API.send_close_order(position)
+            
             if not resp:
                 logger.error(f'action=buy status=error responce={resp}')
                 return False
@@ -262,9 +278,15 @@ class AI(object):
                 logger.info(trade_log.rstrip('\n'))
                 logger.info(f'action=buy buy_point={buy_point} environment={self.environment} status=completion')
 
-                self.stop_limit = df.candles[i].close * self.stop_limit_percent
+                last_event = self.signal_events.signals[-1]
+                print(last_event.settle_type)
+                if last_event.settle_type == constants.OPEN:
+                    self.stop_limit_sell = df.candles[i].close * self.stop_limit_percent_sell
+                if last_event.settle_type == constants.CLOSE:
+                    self.stop_limit_buy = 0.0
+                    self.update_optimize_params(is_continue=True)
 
-            if sell_point > 0 or self.stop_limit > df.candles[i].close:
+            if sell_point > 0 or self.stop_limit_sell > df.candles[i].close:
                 indicator = trade_log.rstrip('\n')
                 if not self.sell(df.candles[i], indicator):
                     continue
@@ -272,5 +294,11 @@ class AI(object):
                 logger.info(trade_log.rstrip('\n'))
                 logger.info(f'action=sell sell_point={sell_point} environment={self.environment} status=completion')
 
-                self.stop_limit = 0.0
-                self.update_optimize_params(is_continue=True)
+                last_event = self.signal_events.signals[-1]
+                print(last_event.settle_type)
+                if last_event.settle_type == constants.OPEN:
+                    self.stop_limit_buy = df.candles[i].close * self.stop_limit_percent_buy
+                if last_event.settle_type == constants.CLOSE:
+                    self.stop_limit_sell = 0.0
+                    self.update_optimize_params(is_continue=True)
+                

@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 import dateutil.parser
+import math
 import time
 import requests
 import json
@@ -121,27 +122,14 @@ class APIClient(object):
         self.get_executions_path = settings.gmo_get_executions_path
         self.get_open_positions_path = settings.gmo_get_open_positions_path
 
-    def make_headers(self, method, path, request_body=None):
-        timestamp = '{0}000'.format(int(time.mktime(datetime.now().timetuple())))
-        if request_body:
-            text = timestamp + method + path + json.dumps(request_body)
-        else:
-            text = timestamp + method + path
-        sign = hmac.new(bytes(self.api_secret.encode('ascii')), bytes(text.encode('ascii')), hashlib.sha256).hexdigest()
-        headers = {
-            'API-KEY': self.api_key,
-            'API-TIMESTAMP': timestamp,
-            'API-SIGN': sign
-        }
-        return headers
-
     def set_initial_candles(self):
+        logger.info('action=set_initial_candles status=start')
         for duration in constants.DURATIONS:
             duration_time = constants.TRADE_MAP[duration]['granularity']
             if duration_time in constants.CRYPTOWATCH_ENABLE_PERIOD:
                 candles = self.get_initial_candles()
                 create_initial_candle_with_duration(self.product_code, duration, candles)
-        logger.info(f'action=set_initial_candles status=end')
+        logger.info('action=set_initial_candles status=end')
 
     def get_initial_candles(self):
         try:
@@ -159,7 +147,7 @@ class APIClient(object):
             sorted_candles = sorted(candles, key=lambda x: x['openTime'])
             sorted_candles = sorted_candles[-settings.initial_period:]
             list_candles = list(map(lambda x:[int(x["openTime"])/1000, x["open"], x["high"], x["low"], x["close"], x["volume"]], sorted_candles))
-            logger.info(f'action=get_initial_candles status=end')
+            logger.info('action=get_initial_candles status=end')
         except Exception as e:
             logger.error(f'action=get_balance error={e}')
             raise
@@ -184,10 +172,8 @@ class APIClient(object):
             method = 'GET'
             end_point = self.public_end_point
             path = self.get_ticker_path.format(product_code=self.product_code)
-            print(path)
             headers = self.make_headers(method, path)
             resp = requests.get(end_point + path, headers=headers)
-            print(resp.json()['data'])
         except Exception as e:
             logger.error(f'action=get_ticker error={e}')
             raise
@@ -215,7 +201,6 @@ class APIClient(object):
         headers = self.make_headers(method, path, request_body)
         try:
             resp = requests.post(end_point + path, headers=headers, data=json.dumps(request_body))
-            print(resp.json())
         except Exception as e:
             logger.error(f'action=send_order error={e}')
             raise
@@ -234,9 +219,14 @@ class APIClient(object):
         end_point = self.private_end_point
         path = self.send_close_order_path
 
+        if position.side == constants.BUY:
+            side = 'SELL'
+        if position.side == constants.SELL:
+            side = 'BUY'
+
         request_body = {
             'symbol': position.product_code,
-            'side': position.side,
+            'side': side,
             'executionType': position.execution_type,
             'size': position.size,
             # "timeInForce": "FAK",
@@ -297,7 +287,6 @@ class APIClient(object):
     #         return resp
 
     #     resp = resp.json()['data']['list'][0]
-    #     print(resp)
     #     order = Order(
     #         product_code=resp['symbol'],
     #         side=resp['side'],
@@ -329,7 +318,6 @@ class APIClient(object):
             return resp
 
         resp = resp.json()['data']['list'][0]
-        print(resp)
         order = Order(
             product_code=resp['symbol'],
             side=resp['side'],
@@ -368,6 +356,29 @@ class APIClient(object):
         )
         return position
 
+    def make_headers(self, method, path, request_body=None):
+        timestamp = '{0}000'.format(int(time.mktime(datetime.now().timetuple())))
+        if request_body:
+            text = timestamp + method + path + json.dumps(request_body)
+        else:
+            text = timestamp + method + path
+        sign = hmac.new(bytes(self.api_secret.encode('ascii')), bytes(text.encode('ascii')), hashlib.sha256).hexdigest()
+        headers = {
+            'API-KEY': self.api_key,
+            'API-TIMESTAMP': timestamp,
+            'API-SIGN': sign
+        }
+        return headers
+
+    def get_size(self, use_percent, decimal_point):
+        margin = self.get_margin()
+        available = float(margin.available * use_percent)
+        ticker = self.get_ticker(self.product_code)
+        ask = ticker.ask
+        size = available / ask * fx_actual_leverage
+        size = math.floor(size * 10 ** decimal_point) / (10 ** decimal_point)
+        return size
+
 class RealtimeAPI(object):
 
     def __init__(self, url, channel, callback):
@@ -388,7 +399,6 @@ class RealtimeAPI(object):
     # when we get message
     def on_message(self, ws, message):
         resp = json.loads(message)
-        print(resp)
         self.set_realtime_ticker(resp, self.callback)
 
     # when error occurs
@@ -416,9 +426,18 @@ class RealtimeAPI(object):
     def set_realtime_ticker(self, resp, callback):
         timestamp = datetime.timestamp(
             dateutil.parser.parse(resp['timestamp']))
-        product_code = resp['product_code']
-        bid = float(resp['best_bid'])
-        ask = float(resp['best_ask'])
+        product_code = resp['symbol']
+        bid = float(resp['bid'])
+        ask = float(resp['ask'])
         volume = float(resp['volume'])
         ticker = Ticker(product_code, timestamp, bid, ask, volume)
         callback(ticker)
+
+class Common(object):
+    def __init__(self, product_code, side, size, price='', execution_type=None, position_id=None):
+        self.product_code = product_code
+        self.side = side
+        self.size = size
+        self.price = price
+        self.execution_type = execution_type
+        self.position_id = position_id

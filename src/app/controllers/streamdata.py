@@ -27,7 +27,7 @@ class StreamData(object):
             use_percent=settings.use_percent,
             duration=settings.trade_duration,
             past_period=settings.past_period,
-            stop_limit_percent=settings.stop_limit_percent,
+            stop_limit_percent_sell=settings.stop_limit_percent_sell,
             environment=settings.environment)
         self.trade_lock = Lock()
             

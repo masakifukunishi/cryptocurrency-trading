@@ -103,9 +103,46 @@ class SignalEvents(object):
 
         return False
 
+    def can_buy_fx(self, time):
+        if len(self.signals) == 0:
+            return True
+
+        last_signal = self.signals[-1]
+        if last_signal.side == constants.SELL and last_signal.time < time:
+            return True
+
+        if last_signal.side == constants.BUY and last_signal.settle_type == constants.CLOSE and last_signal.time < time:
+            return True
+
+        return False
+
+    def can_sell_fx(self, time):
+        if len(self.signals) == 0:
+            return True
+
+        last_signal = self.signals[-1]
+        if last_signal.side == constants.BUY and last_signal.time < time:
+            return True
+
+        if last_signal.side == constants.SELL and last_signal.settle_type == constants.CLOSE and last_signal.time < time:
+            return True
+
+        return False
+
+    def get_next_order_settle_type(self):
+        if len(self.signals) == 0:
+            return constants.OPEN
+
+        last_signal = self.signals[-1]
+        if last_signal.settle_type == constants.OPEN:
+            return constants.CLOSE
+
+        if last_signal.settle_type == constants.CLOSE:
+            return constants.OPEN
+
     def buy(self, product_code, time, price, size, order_id=None, settle_type=None, indicator=None, save=True):
-        if not self.can_buy(time):
-            return False
+        # if not self.can_buy(time):
+        #     return False
 
         signal_event = SignalEvent(time=time, 
                                    product_code=product_code, 
@@ -123,8 +160,8 @@ class SignalEvents(object):
         return True
 
     def sell(self, product_code, time, price, size, order_id=None, settle_type=None, indicator=None, save=True):
-        if not self.can_sell(time):
-            return False
+        # if not self.can_sell(time):
+        #     return False
 
         signal_event = SignalEvent(time=time,
                                    product_code=product_code,
@@ -143,7 +180,7 @@ class SignalEvents(object):
 
     @staticmethod
     def get_signal_events_last():
-        signal_events = SignalEvent.get_signal_events_last(count)
+        signal_events = SignalEvent.get_signal_events_last()
         return SignalEvents(signal_events)
 
     @staticmethod
