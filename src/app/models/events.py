@@ -25,6 +25,8 @@ class SignalEvent(Base):
     side = Column(String)
     price = Column(Float)
     size = Column(Float)
+    order_id = Column(Integer)
+    settle_type = Column(String)
     indicator = Column(String)
 
     def save(self):
@@ -39,11 +41,21 @@ class SignalEvent(Base):
             'side': self.side,
             'price': self.price,
             'size': self.size,
+            'order_id': self.order_id,
+            'settle_type': self.settle_type,
             'indicator': self.indicator,
         })
         if not dict_values:
             return None
         return dict_values
+
+    @classmethod
+    def get_signal_events_last(cls, prduct_code=settings.product_code):
+        with session_scope() as session:
+            row = session.query(cls).filter(cls.product_code == prduct_code).order_by(desc(cls.time)).first()
+            if row is None:
+                return []
+            return row
 
     @classmethod
     def get_signal_events_by_count(cls, count, prduct_code=settings.product_code):
@@ -91,11 +103,18 @@ class SignalEvents(object):
 
         return False
 
-    def buy(self, product_code, time, price, size, indicator, save):
+    def buy(self, product_code, time, price, size, order_id=None, settle_type=None, indicator=None, save=True):
         if not self.can_buy(time):
             return False
 
-        signal_event = SignalEvent(time=time, product_code=product_code, side=constants.BUY, price=price, size=size, indicator=indicator)
+        signal_event = SignalEvent(time=time, 
+                                   product_code=product_code, 
+                                   side=constants.BUY, 
+                                   price=price, 
+                                   size=size,
+                                   order_id=order_id,
+                                   settle_type=settle_type,
+                                   indicator=indicator)
         if save:
             signal_event.save()
 
@@ -103,17 +122,29 @@ class SignalEvents(object):
 
         return True
 
-    def sell(self, product_code, time, price, size, indicator, save):
+    def sell(self, product_code, time, price, size, order_id=None, settle_type=None, indicator=None, save=True):
         if not self.can_sell(time):
             return False
 
-        signal_event = SignalEvent(time=time, product_code=product_code, side=constants.SELL, price=price, size=size, indicator=indicator)
+        signal_event = SignalEvent(time=time,
+                                   product_code=product_code,
+                                   side=constants.SELL,
+                                   price=price,
+                                   size=size,
+                                   order_id=order_id,
+                                   settle_type=settle_type,
+                                   indicator=indicator)
         if save:
             signal_event.save()
 
         self.signals.append(signal_event)
 
         return True
+
+    @staticmethod
+    def get_signal_events_last():
+        signal_events = SignalEvent.get_signal_events_last(count)
+        return SignalEvents(signal_events)
 
     @staticmethod
     def get_signal_events_by_count(count:int):

@@ -1,10 +1,13 @@
 from datetime import datetime, timedelta
+import dateutil.parser
+import time
 import requests
 import json
 import pytz
-import logging
-import json
+import hmac
+import hashlib
 import websocket
+import logging
 
 from app.models.candle import create_initial_candle_with_duration
 
@@ -13,10 +16,11 @@ import settings.settings as settings
 
 logger = logging.getLogger(__name__)
 
-class Balance(object):
-    def __init__(self, currency, available):
-        self.currency = currency
-        self.available = available
+ORDER_CLOSE = 'CLOSE'
+
+class Margin(object):
+    def __init__(self, available):
+        self.available = int(available)
 
 class Ticker(object):
     def __init__(self, product_code, timestamp, bid, ask, volume):
@@ -79,31 +83,64 @@ class Ticker(object):
 
 class Order(object):
     def __init__(self, product_code, side, size, price='',
-                 child_order_type='MARKET', minute_to_expire=10, child_order_state=None, child_order_acceptance_id=None):
+                 execution_type='MARKET', settle_type=None, order_id=None):
         self.product_code = product_code
         self.side = side
         self.size = size
         self.price = price
-        self.child_order_type = child_order_type
-        self.minute_to_expire = minute_to_expire
-        self.child_order_state = child_order_state
-        self.child_order_acceptance_id = child_order_acceptance_id
+        self.execution_type = execution_type
+        self.order_id = order_id
+        self.settle_type = settle_type
 
 class OrderTimeoutError(Exception):
     """Order timeout error"""
-    
+
+class Position(object):
+    def __init__(self, product_code, side, size, price='', execution_type=None, position_id=None):
+        self.product_code = product_code
+        self.side = side
+        self.size = size
+        self.price = price
+        self.execution_type = execution_type
+        self.position_id = position_id
+
 class APIClient(object):
     def __init__(self, api_key, api_secret):
         self.api_key = api_key
         self.api_secret = api_secret
+        self.product_code = settings.product_code
         self.public_end_point = settings.gmo_public_end_point
+        self.private_end_point = settings.gmo_private_end_point
+        self.trade_duration = settings.trade_duration
+        # path
+        self.send_order_path = settings.gmo_send_order_path
+        self.send_close_order_path = settings.gmo_send_close_order_path
+        self.get_margin_path = settings.gmo_get_margin_path
+        self.get_ticker_path = settings.gmo_get_ticker_path
+        self.get_order_path = settings.gmo_get_order_path
+        self.get_executions_path = settings.gmo_get_executions_path
+        self.get_open_positions_path = settings.gmo_get_open_positions_path
+
+    def make_headers(self, method, path, request_body=None):
+        timestamp = '{0}000'.format(int(time.mktime(datetime.now().timetuple())))
+        if request_body:
+            text = timestamp + method + path + json.dumps(request_body)
+        else:
+            text = timestamp + method + path
+        sign = hmac.new(bytes(self.api_secret.encode('ascii')), bytes(text.encode('ascii')), hashlib.sha256).hexdigest()
+        headers = {
+            'API-KEY': self.api_key,
+            'API-TIMESTAMP': timestamp,
+            'API-SIGN': sign
+        }
+        return headers
 
     def set_initial_candles(self):
         for duration in constants.DURATIONS:
             duration_time = constants.TRADE_MAP[duration]['granularity']
             if duration_time in constants.CRYPTOWATCH_ENABLE_PERIOD:
                 candles = self.get_initial_candles()
-                create_initial_candle_with_duration(settings.product_code, duration, candles)
+                create_initial_candle_with_duration(self.product_code, duration, candles)
         logger.info(f'action=set_initial_candles status=end')
 
     def get_initial_candles(self):
@@ -113,8 +150,8 @@ class APIClient(object):
             # get data for the last 10 days
             for num in range(10):
                 target_date = (now - timedelta(days=num)).strftime("%Y%m%d")
-                path = settings.gmo_kline_path.format(currency=settings.sell_currency,
-                                                    duration=settings.trade_duration, 
+                path = settings.gmo_kline_path.format(currency=self.product_code,
+                                                    duration=self.trade_duration, 
                                                     date=target_date)
                 response = requests.get(self.public_end_point + path)
                 candles.extend(response.json()['data'])
@@ -128,208 +165,260 @@ class APIClient(object):
             raise
         return list_candles
 
-    def get_balance(self, currency) -> Balance:
-        apiKey    = 'YOUR_API_KEY'
-        secretKey = 'YOUR_SECRET_KEY'
-
-        timestamp = '{0}000'.format(int(time.mktime(datetime.now().timetuple())))
-        method    = 'GET'
-        endPoint  = 'https://api.coin.z.com/private'
-        path      = '/v1/account/margin'
-
-        text = timestamp + method + path
-        sign = hmac.new(bytes(secretKey.encode('ascii')), bytes(text.encode('ascii')), hashlib.sha256).hexdigest()
-
-        headers = {
-            "API-KEY": apiKey,
-            "API-TIMESTAMP": timestamp,
-            "API-SIGN": sign
-        }
-
-        res = requests.get(endPoint + path, headers=headers)
-        print (json.dumps(res.json(), indent=2))
-
-
-    def get_balance(self, currency) -> Balance:
+    def get_margin(self) -> Margin:
         try:
-            resp = self.client.getbalance()
-            balance = (list(filter(lambda x: x['currency_code'] == currency, resp)))[0]
+            method = 'GET'
+            end_point = self.private_end_point
+            path = self.get_margin_path
+            headers = self.make_headers(method, path)
+            resp = requests.get(end_point + path, headers=headers)
         except Exception as e:
             logger.error(f'action=get_balance error={e}')
             raise
-        currency = balance['currency_code']
-        available = balance['available']
-        return Balance(currency, available)
+
+        available = resp.json()['data']['availableAmount']
+        return Margin(available)
 
     def get_ticker(self, product_code) -> Ticker:
         try:
-            resp = self.client.ticker(product_code=product_code)
+            method = 'GET'
+            end_point = self.public_end_point
+            path = self.get_ticker_path.format(product_code=self.product_code)
+            print(path)
+            headers = self.make_headers(method, path)
+            resp = requests.get(end_point + path, headers=headers)
+            print(resp.json()['data'])
         except Exception as e:
             logger.error(f'action=get_ticker error={e}')
             raise
-        timestamp = datetime.timestamp(
-            dateutil.parser.parse(resp['timestamp']))
-        product_code = resp['product_code']
-        bid = float(resp['best_bid'])
-        ask = float(resp['best_ask'])
+        resp = resp.json()['data'][0]
+        timestamp = datetime.timestamp(dateutil.parser.parse(resp['timestamp']))
+        product_code = resp['symbol']
+        bid = float(resp['bid'])
+        ask = float(resp['ask'])
         volume = float(resp['volume'])
         return Ticker(product_code, timestamp, bid, ask, volume)
 
-    def get_realtime_ticker(self, product_code, callback):
-        while True:
-            try:
-                resp = self.client.ticker(product_code=product_code)
-            except Exception as e:
-                logger.error(f'action=get_realtime_ticker error={e}')
-                time.sleep(1.5)
-                continue
-            timestamp = datetime.timestamp(
-                dateutil.parser.parse(resp['timestamp']))
-            product_code = resp['product_code']
-            bid = float(resp['best_bid'])
-            ask = float(resp['best_ask'])
-            volume = float(resp['volume'])
-            ticker = Ticker(product_code, timestamp, bid, ask, volume)
-            callback(ticker)
-            time.sleep(settings.get_ticker_duration)
-            
     def send_order(self, order: Order):
-        now = datetime.utcnow().strftime("%H:%M")
-        if settings.bitflyer_maintenance_start_time <= now <= settings.bitflyer_maintenance_end_time:
-            logger.warning(f'action=send_order time={now} : During maintenance')
-            return False
-        logger.info(f'action=send_order status=run time={datetime.utcnow()}')
+        method = 'POST'
+        end_point = self.private_end_point
+        path = self.send_order_path
+
+        request_body = {
+            'symbol': order.product_code,
+            'side': order.side,
+            'executionType': order.execution_type,
+            'size': order.size,
+        }
+        logger.info(f'action=send_order status=run time={datetime.now()}')
+
+        headers = self.make_headers(method, path, request_body)
         try:
-            resp = self.client.sendchildorder(product_code=order.product_code,
-                                     child_order_type=order.child_order_type,
-                                     side=order.side,
-                                     size=order.size,
-                                     minute_to_expire=order.minute_to_expire)
-            logger.info(f'action=send_order resp={resp}')
+            resp = requests.post(end_point + path, headers=headers, data=json.dumps(request_body))
+            print(resp.json())
         except Exception as e:
             logger.error(f'action=send_order error={e}')
             raise
-            
         time.sleep(1)
-        order_id = resp['child_order_acceptance_id']
-        order = self.wait_order_complete(order_id)
-        logger.info(f'action=send_order status=end time={datetime.utcnow()}')
+        order_id = resp.json()['data']
+        order = self.get_executions(order_id)
+        logger.info(f'action=send_order status=end time={datetime.now()}')
         if not order:
             logger.error('action=send_order error=timeout')
             raise OrderTimeoutError
         
         return order
 
-    def wait_order_complete(self, order_id) -> Order:
-        count = 0
-        timeout_count = 20
-        while True:
-            order = self.get_order(order_id)
-            if order and order.child_order_state == ORDER_COMPLETED:
-                return order
-            time.sleep(1)
-            count += 1
-            if count > timeout_count:
-                return None
+    def send_close_order(self, position: Position):
+        method = 'POST'
+        end_point = self.private_end_point
+        path = self.send_close_order_path
 
-    def get_order(self, order_id) -> Order:
-        logger.info(f'action=get_order status=run product_code={settings.product_code} child_order_acceptance_id={order_id}')
+        request_body = {
+            'symbol': position.product_code,
+            'side': position.side,
+            'executionType': position.execution_type,
+            'size': position.size,
+            # "timeInForce": "FAK",
+            'settlePosition': [
+                {
+                    'positionId': position.position_id,
+                    'size': position.size
+                }
+            ]
+        }
+        logger.info(f'action=send_close_order status=run time={datetime.now()}')
+        headers = self.make_headers(method, path, request_body)
         try:
-            resp = self.client.getchildorders(product_code=settings.product_code,
-                                     child_order_acceptance_id=order_id)
-            logger.info(f'action=get_order resp={resp}')
+            resp = requests.post(end_point + path, headers=headers, data=json.dumps(request_body))
         except Exception as e:
-            logger.error(f'action=get_order error={e}')
+            logger.error(f'action=send_close_order error={e}')
+            raise
+        time.sleep(1)
+        order_id = resp.json()['data']
+        order = self.get_executions(order_id)
+        logger.info(f'action=send_close_order status=end time={datetime.now()}')
+        if not order:
+            logger.error('action=send_close_order error=timeout')
+            raise OrderTimeoutError
+        
+        return order
+
+
+    # def wait_order_complete(self, order_id) -> Order:
+    #     self.get_order(order_id)
+
+    # def get_order(self, order_id) -> Order:
+    #     logger.info(f'action=get_order status=run product_code={self.product_code} order_id={order_id}')
+
+    #     timestamp = '{0}000'.format(int(time.mktime(datetime.now().timetuple())))
+    #     method = 'GET'
+    #     end_point = self.private_end_point
+    #     path = self.get_order_path
+
+    #     text = timestamp + method + path
+    #     sign = hmac.new(bytes(self.api_secret.encode('ascii')), bytes(text.encode('ascii')), hashlib.sha256).hexdigest()
+    #     parameters = { "orderId": order_id }
+
+    #     headers = {
+    #         'API-KEY': self.api_key,
+    #         'API-TIMESTAMP': timestamp,
+    #         'API-SIGN': sign
+    #     }
+    #     try:
+    #         resp = requests.get(end_point + path, headers=headers, params=parameters)
+    #         logger.info(f'action=get_order resp={resp}')
+
+    #     except Exception as e:
+    #         logger.error(f'action=get_order error={e}')
+    #         raise
+
+    #     if not resp:
+    #         return resp
+
+    #     resp = resp.json()['data']['list'][0]
+    #     print(resp)
+    #     order = Order(
+    #         product_code=resp['symbol'],
+    #         side=resp['side'],
+    #         size=float(resp['executedSize']),
+    #         price=float(resp['price']),
+    #         execution_type=resp['executionType'],
+    #         settle_type=resp['settleType'],
+    #         order_id=resp['order_id']
+    #     )
+    #     return order
+
+    def get_executions(self, order_id) -> Order:
+        logger.info(f'action=get_executions status=run product_code={self.product_code} order_id={order_id}')
+        method = 'GET'
+        end_point = self.private_end_point
+        path = self.get_executions_path
+
+        parameters = { "orderId": order_id }
+        headers = self.make_headers(method, path)
+        try:
+            resp = requests.get(end_point + path, headers=headers, params=parameters)
+            logger.info(f'action=get_executions resp={resp}')
+
+        except Exception as e:
+            logger.error(f'action=get_executions error={e}')
             raise
 
         if not resp:
             return resp
-            
+
+        resp = resp.json()['data']['list'][0]
+        print(resp)
         order = Order(
-            product_code=resp[0]['product_code'],
-            side=resp[0]['side'],
-            size=float(resp[0]['size']),
-            price=float(resp[0]['average_price']),
-            child_order_type=resp[0]['child_order_type'],
-            child_order_state=resp[0]['child_order_state'],
-            child_order_acceptance_id=resp[0]['child_order_acceptance_id']
+            product_code=resp['symbol'],
+            side=resp['side'],
+            size=float(resp['size']),
+            price=float(resp['price']),
+            settle_type=resp['settleType'],
+            order_id=resp['orderId']
         )
         return order
 
-# class RealtimeAPI(object):
-#     def __init__(self, url, channel, callback):
-#         self.url = url
-#         self.callback = callback
-#         self.connect()
+    def get_open_positions(self, order_id) -> Order:
+        logger.info(f'action=get_open_positions status=run product_code={self.product_code}')
+        method = 'GET'
+        end_point = self.private_end_point
+        path = self.get_open_positions_path
+        parameters = { "symbol": self.product_code }
+        headers = self.make_headers(method, path)
+        try:
+            resp = requests.get(end_point + path, headers=headers, params=parameters)
+            logger.info(f'action=get_executions resp={resp}')
 
-#     def connect(self):
-#         self.ws = websocket.WebSocketApp(self.url,header=None,on_open=self.on_open, on_message=self.on_message, on_error=self.on_error, on_close=self.on_close)
-#         self.ws.run_forever()
-#         logger.info('Web Socket process ended.')
+        except Exception as e:
+            logger.error(f'action=get_executions error={e}')
+            raise
 
-#     # when we get message
-#     def on_message(self, ws, message):
-#         print(message)
-#         resp = json.loads(message)['params']['message']
-#         self.set_realtime_ticker(resp, self.callback)
+        if not resp:
+            return resp
 
-# class RealtimeAPI(object):
+        resp = resp.json()['data']['list'][0]
+        position = Position(
+            product_code=resp['symbol'],
+            side=resp['side'],
+            size=float(resp['size']),
+            price=float(resp['price']),
+            position_id=resp['positionId'],
+        )
+        return position
 
-#     def __init__(self, url, channel, callback):
-#         self.url = url
-#         self.channel = channel
-#         self.callback = callback
-#         self.connect()
+class RealtimeAPI(object):
 
-#     def connect(self):
-#         self.ws = websocket.WebSocketApp(self.url,header=None,on_open=self.on_open, on_message=self.on_message, on_error=self.on_error, on_close=self.on_close)
-#         # self.ws.keep_running = True 
-#         self.ws.run_forever()
-#         logger.info('Web Socket process ended.')
+    def __init__(self, url, channel, callback):
+        self.url = url
+        self.channel = channel
+        self.callback = callback
+        self.product_code = settings.product_code
+        self.connect()
 
-#     # def disconnect(self):
-#     #     self.ws.keep_running = False
-#     #     self.ws.close()
+    def connect(self):
+        self.ws = websocket.WebSocketApp(self.url,header=None,on_open=self.on_open, on_message=self.on_message, on_error=self.on_error, on_close=self.on_close)
+        self.ws.run_forever()
+        logger.info('Web Socket process ended.')
         
-#     """
-#     Below are callback functions of websocket.
-#     """
-#     # when we get message
-#     def on_message(self, ws, message):
-#         resp = json.loads(message)['params']['message']
-#         self.set_realtime_ticker(resp, self.callback)
+    """
+    Below are callback functions of websocket.
+    """
+    # when we get message
+    def on_message(self, ws, message):
+        resp = json.loads(message)
+        print(resp)
+        self.set_realtime_ticker(resp, self.callback)
 
-#     # when error occurs
-#     def on_error(self, ws, error, _="", __ =""):
-#         logger.error(error)
-#         if error:
-#             time.sleep(5)
-#             self.connect()
-#         # logger.error(error)
-#         # self.disconnect()
-#         # time.sleep(2)
-#         # self.connect()
+    # when error occurs
+    def on_error(self, ws, error, _="", __ =""):
+        logger.error(error)
+        if error:
+            time.sleep(5)
+            self.connect()
 
-#     # when websocket closed.
-#     def on_close(self, ws):
-#         logger.info('disconnected streaming server')
+    # when websocket closed.
+    def on_close(self, ws):
+        logger.info('disconnected streaming server')
 
-#     # when websocket opened.
-#     def on_open(self, ws):
-#         logger.info('connected streaming server')
-#         input_data = json.dumps(
-#             {'method' : 'subscribe',
-#             'params' : {'channel' : self.channel}
-#             }
-#         )
-#         ws.send(input_data)
+    # when websocket opened.
+    def on_open(self, ws):
+        logger.info('connected streaming server')
+        input_data = json.dumps(
+            {'command' : 'subscribe',
+            'channel' : self.channel,
+            'symbol' : self.product_code,
+            }
+        )
+        ws.send(input_data)
         
-#     def set_realtime_ticker(self, resp, callback):
-#         timestamp = datetime.timestamp(
-#             dateutil.parser.parse(resp['timestamp']))
-#         product_code = resp['product_code']
-#         bid = float(resp['best_bid'])
-#         ask = float(resp['best_ask'])
-#         volume = float(resp['volume'])
-#         ticker = Ticker(product_code, timestamp, bid, ask, volume)
-#         callback(ticker)
+    def set_realtime_ticker(self, resp, callback):
+        timestamp = datetime.timestamp(
+            dateutil.parser.parse(resp['timestamp']))
+        product_code = resp['product_code']
+        bid = float(resp['best_bid'])
+        ask = float(resp['best_ask'])
+        volume = float(resp['volume'])
+        ticker = Ticker(product_code, timestamp, bid, ask, volume)
+        callback(ticker)

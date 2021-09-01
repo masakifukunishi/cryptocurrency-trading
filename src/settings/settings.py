@@ -20,8 +20,17 @@ gmo_api_secret = conf['gmo']['api_secret']
 gmo_public_end_point = conf['gmo']['public_end_point']
 gmo_private_end_point = conf['gmo']['private_end_point']
 gmo_kline_path = conf['gmo']['kline_path']
-gmo_margin_path = conf['gmo']['margin_path']
+gmo_send_order_path = conf['gmo']['send_order_path']
+gmo_send_close_order_path = conf['gmo']['send_close_order_path']
+gmo_get_margin_path = conf['gmo']['get_margin_path']
+gmo_get_ticker_path = conf['gmo']['get_ticker_path']
+gmo_get_order_path = conf['gmo']['get_order_path']
+gmo_get_executions_path = conf['gmo']['get_executions_path']
+gmo_get_open_positions_path = conf['gmo']['get_open_positions_path']
 gmo_realtime_api_end_point = conf['gmo']['realtime_api_end_point']
+
+fx_leverage = float(conf['fx']['leverage'])
+fx_actual_leverage = float(conf['fx']['actual_leverage'])
 
 product_code = conf['currency']['product_code']
 buy_currency = conf['currency']['buy_currency']
