@@ -104,6 +104,9 @@ class BtcJpyBaseCandle5M(BaseCandleMixin, Base):
 class BtcJpyBaseCandle15M(BaseCandleMixin, Base):
     __tablename__ = 'BTC_JPY_15M'
 
+class BtcJpyBaseCandle30M(BaseCandleMixin, Base):
+    __tablename__ = 'BTC_JPY_30M'
+
 class BtcJpyBaseCandle1H(BaseCandleMixin, Base):
     __tablename__ = 'BTC_JPY_1H'
     
@@ -120,6 +123,8 @@ def factory_candle_class(product_code, duration):
             return BtcJpyBaseCandle5M
         if duration == constants.DURATION_15M:
             return BtcJpyBaseCandle15M
+        if duration == constants.DURATION_30M:
+            return BtcJpyBaseCandle30M
         if duration == constants.DURATION_1H:
             return BtcJpyBaseCandle1H
 

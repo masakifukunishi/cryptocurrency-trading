@@ -39,6 +39,7 @@ sell_currency = conf['currency']['sell_currency']
 db_name = conf['db']['name']
 db_driver = conf['db']['driver']
 
+type = conf['trading']['type']
 environment = conf['trading']['environment']
 trade_duration = conf['trading']['trade_duration'].lower()
 use_percent = float(conf['trading']['use_percent'])

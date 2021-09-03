@@ -30,6 +30,8 @@ def duration_seconds(duration: str) -> int:
         return 60 * 5
     if duration == constants.DURATION_15M:
         return 60 * 15
+    if duration == constants.DURATION_30M:
+        return 60 * 30
     if duration == constants.DURATION_1H:
         return 60 * 60
     else:
@@ -76,9 +78,13 @@ class AI(object):
             self.update_optimize_params(is_continue)
 
     def buy(self, candle, indicator):
+        if not self.signal_events.can_buy(candle.time):
+            # logger.info(f'action=buy signal_events={self.signal_events.value}')
+            # logger.warning('action=buy status=false error=previous_was_buy')
+            return False
         # dev
         if self.environment == constants.ENVIRONMENT_DEV:
-            could_buy = self.signal_events.buy(self.product_code, candle.time, candle.close, 0.01, indicator, save=True)
+            could_buy = self.signal_events.buy(self.product_code, candle.time, candle.close, 0.1, indicator, save=True)
             # logger.info(f'action=buy signal_events={self.signal_events.value}')
             return could_buy
 
@@ -87,15 +93,10 @@ class AI(object):
             # logger.warning(f'start_trade={self.start_trade}')
             # logger.warning(f'candle_time={candle.time}')
             return False
-
-        if not self.signal_events.can_buy(candle.time):
-            # logger.info(f'action=buy signal_events={self.signal_events.value}')
-            # logger.warning('action=buy status=false error=previous_was_buy')
-            return False
             
         # staging
         if self.environment == constants.ENVIRONMENT_STAGING:
-            could_buy = self.signal_events.buy(self.product_code, candle.time, candle.close, 0.01, indicator, save=True)
+            could_buy = self.signal_events.buy(self.product_code, candle.time, candle.close, 0.1, indicator, save=True)
             return could_buy
 
         # production
@@ -116,9 +117,14 @@ class AI(object):
             return could_buy
 
     def sell(self, candle, indicator):
+        if not self.signal_events.can_sell(candle.time):
+            # logger.info(f'action=sell signal_events={self.signal_events.value}')
+            # logger.warning('action=sell status=false error=previous_was_sell')
+            return False
+            
         # dev
         if self.environment == constants.ENVIRONMENT_DEV:
-            could_sell = self.signal_events.sell(self.product_code, candle.time, candle.close, 0.01, indicator, save=True)
+            could_sell = self.signal_events.sell(self.product_code, candle.time, candle.close, 0.1, indicator, save=True)
             # logger.info(f'action=sell signal_events={self.signal_events.value}')
             return could_sell
 
@@ -128,14 +134,9 @@ class AI(object):
             # logger.warning(f'candle_time={candle.time}')
             return False
 
-        if not self.signal_events.can_sell(candle.time):
-            # logger.info(f'action=sell signal_events={self.signal_events.value}')
-            # logger.warning('action=sell status=false error=previous_was_sell')
-            return False
-
         # staging
         if self.environment == constants.ENVIRONMENT_STAGING:
-            could_sell = self.signal_events.sell(self.product_code, candle.time, candle.close, 0.01, indicator, save=True)
+            could_sell = self.signal_events.sell(self.product_code, candle.time, candle.close, 0.1, indicator, save=True)
             return could_sell
 
         # production

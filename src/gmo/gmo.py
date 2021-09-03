@@ -72,6 +72,13 @@ class Ticker(object):
                 self.time.hour, fifteen_minute)
             time_format = '%Y-%m-%d %H:%M'
 
+        elif duration == constants.DURATION_30M:
+            fifteen_minute = math.floor(self.time.minute / 30) * 30
+            ticker_time = datetime(
+                self.time.year, self.time.month, self.time.day,
+                self.time.hour, fifteen_minute)
+            time_format = '%Y-%m-%d %H:%M'
+
         elif duration == constants.DURATION_1H:
             time_format = '%Y-%m-%d %H'
         else:
@@ -135,11 +142,17 @@ class APIClient(object):
         try:
             candles = []
             now = datetime.now(pytz.timezone('Asia/Tokyo'))
+            if self.trade_duration[-1] == 'm':
+                duration = self.trade_duration.replace('m', 'min')
+
+            if self.trade_duration[-1] == 'h':
+                duration = self.trade_duration.replace('h', 'hour')
+
             # get data for the last 10 days
             for num in range(10):
                 target_date = (now - timedelta(days=num)).strftime("%Y%m%d")
                 path = settings.gmo_kline_path.format(currency=self.product_code,
-                                                    duration=self.trade_duration, 
+                                                    duration=duration, 
                                                     date=target_date)
                 response = requests.get(self.public_end_point + path)
                 candles.extend(response.json()['data'])

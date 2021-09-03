@@ -50,14 +50,6 @@ class SignalEvent(Base):
         return dict_values
 
     @classmethod
-    def get_signal_events_last(cls, prduct_code=settings.product_code):
-        with session_scope() as session:
-            row = session.query(cls).filter(cls.product_code == prduct_code).order_by(desc(cls.time)).first()
-            if row is None:
-                return []
-            return row
-
-    @classmethod
     def get_signal_events_by_count(cls, count, prduct_code=settings.product_code):
         with session_scope() as session:
             rows = session.query(cls).filter(cls.product_code == prduct_code).order_by(desc(cls.time)).limit(count).all()
@@ -179,11 +171,6 @@ class SignalEvents(object):
         return True
 
     @staticmethod
-    def get_signal_events_last():
-        signal_events = SignalEvent.get_signal_events_last()
-        return SignalEvents(signal_events)
-
-    @staticmethod
     def get_signal_events_by_count(count:int):
         signal_events = SignalEvent.get_signal_events_by_count(count)
         return SignalEvents(signal_events)
@@ -214,14 +201,49 @@ class SignalEvents(object):
         return total
 
     @property
+    def profit_fx(self):
+        total = 0.0
+        before_sell = 0.0
+        is_holding = False
+        for i in range(len(self.signals)):
+            signal_event = self.signals[i]
+            if signal_event.side == constants.BUY and signal_event.settle_type == constants.OPEN:
+                total -= signal_event.price * signal_event.size
+                is_holding = True
+
+            if signal_event.side == constants.BUY and signal_event.settle_type == constants.CLOSE:
+                total -= signal_event.price * signal_event.size
+                is_holding = False
+                before_close = total
+
+            if signal_event.side == constants.SELL and signal_event.settle_type == constants.OPEN:
+                total += signal_event.price * signal_event.size
+                is_holding = True
+
+            if signal_event.side == constants.SELL and signal_event.settle_type == constants.CLOSE:
+                total += signal_event.price * signal_event.size
+                is_holding = False
+                before_close = total
+                
+        if is_holding:
+            return before_close
+        return total
+
+    @property
     def value(self):
         signals = [s.value for s in self.signals]
         if not signals:
             signals = None
 
-        profit = self.profit
-        if not self.profit:
-            profit = None
+        if settings.type == constants.TRADE_TYPE_CASH:
+            profit = self.profit
+            if not self.profit:
+                profit = None
+
+        if settings.type == constants.TRADE_TYPE_FX:
+            profit = self.profit_fx
+            if not self.profit_fx:
+                profit = None
 
         return {
             'signals': signals,

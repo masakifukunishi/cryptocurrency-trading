@@ -30,6 +30,8 @@ def duration_seconds(duration: str) -> int:
         return 60 * 5
     if duration == constants.DURATION_15M:
         return 60 * 15
+    if duration == constants.DURATION_30M:
+        return 60 * 30
     if duration == constants.DURATION_1H:
         return 60 * 60
     else:
@@ -84,7 +86,7 @@ class AI(object):
             could_buy = self.signal_events.buy(product_code = self.product_code,
                                                time = candle.time,
                                                price = candle.close,
-                                               size = 0.01,
+                                               size = 0.1,
                                                settle_type = next_order_settle_type,
                                                indicator = indicator,
                                                save=True)
@@ -98,7 +100,7 @@ class AI(object):
             could_buy = self.signal_events.buy(product_code = self.product_code,
                                                time = candle.time,
                                                price = candle.close,
-                                               size = 0.01,
+                                               size = 0.1,
                                                settle_type = next_order_settle_type,
                                                indicator = indicator,
                                                save=True)
@@ -139,7 +141,7 @@ class AI(object):
             could_sell = self.signal_events.sell(product_code = self.product_code,
                                                time = candle.time,
                                                price = candle.close,
-                                               size = 0.01,
+                                               size = 0.1,
                                                settle_type = next_order_settle_type,
                                                indicator = indicator,
                                                save=True)
@@ -153,7 +155,7 @@ class AI(object):
             could_sell = self.signal_events.sell(product_code = self.product_code,
                                                time = candle.time,
                                                price = candle.close,
-                                               size = 0.01,
+                                               size = 0.1,
                                                settle_type = next_order_settle_type,
                                                indicator = indicator,
                                                save=True)

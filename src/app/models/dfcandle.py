@@ -223,10 +223,10 @@ class DataFrameCandle(object):
                 continue
 
             if ema_value_1[i-1] < ema_value_2[i-1] and ema_value_1[i] >= ema_value_2[i]:
-                signal_events.buy(product_code=self.product_code, time=self.candles[i].time, price=self.candles[i].close, size=0.01, indicator='', save=False)
+                signal_events.buy(product_code=self.product_code, time=self.candles[i].time, price=self.candles[i].close, size=0.1, indicator='', save=False)
 
             if ema_value_1[i-1] > ema_value_2[i-1] and ema_value_1[i] <= ema_value_2[i]:
-                signal_events.sell(product_code=self.product_code, time=self.candles[i].time, price=self.candles[i].close, size=0.01, indicator='', save=False)
+                signal_events.sell(product_code=self.product_code, time=self.candles[i].time, price=self.candles[i].close, size=0.1, indicator='', save=False)
 
         return signal_events
 
@@ -259,10 +259,10 @@ class DataFrameCandle(object):
                 continue
 
             if bb_down[i-1] > self.candles[i-1].close and bb_down[i] <= self.candles[i].close:
-                signal_events.buy(product_code=self.product_code, time=self.candles[i].time, price=self.candles[i].close, size=0.01, indicator='', save=False)
+                signal_events.buy(product_code=self.product_code, time=self.candles[i].time, price=self.candles[i].close, size=0.1, indicator='', save=False)
 
             if bb_up[i-1] < self.candles[i-1].close and bb_up[i] >= self.candles[i].close:
-                signal_events.sell(product_code=self.product_code, time=self.candles[i].time, price=self.candles[i].close, size=0.01, indicator='', save=False)
+                signal_events.sell(product_code=self.product_code, time=self.candles[i].time, price=self.candles[i].close, size=0.1, indicator='', save=False)
 
         return signal_events
 
@@ -296,14 +296,14 @@ class DataFrameCandle(object):
                     senkou_a[i] < self.candles[i].low and
                     senkou_b[i] < self.candles[i].low and
                     tenkan[i] > kijun[i]):
-                signal_events.buy(product_code=self.product_code, time=self.candles[i].time, price=self.candles[i].close, size=0.01, indicator='', save=False)
+                signal_events.buy(product_code=self.product_code, time=self.candles[i].time, price=self.candles[i].close, size=0.1, indicator='', save=False)
 
             if (chikou[i-1] > self.candles[i-1].low and
                     chikou[i] <= self.candles[i].low and
                     senkou_a[i] > self.candles[i].high and
                     senkou_b[i] > self.candles[i].high and
                     tenkan[i] < kijun[i]):
-                signal_events.sell(product_code=self.product_code, time=self.candles[i].time, price=self.candles[i].close, size=0.01, indicator='', save=False)
+                signal_events.sell(product_code=self.product_code, time=self.candles[i].time, price=self.candles[i].close, size=0.1, indicator='', save=False)
 
         return signal_events
 
@@ -325,10 +325,10 @@ class DataFrameCandle(object):
                 continue
 
             if values[i-1] < buy_thread and values[i] >= buy_thread:
-                signal_events.buy(product_code=self.product_code, time=self.candles[i].time, price=self.candles[i].close, size=0.01, indicator='', save=False)
+                signal_events.buy(product_code=self.product_code, time=self.candles[i].time, price=self.candles[i].close, size=0.1, indicator='', save=False)
 
             if values[i-1] > sell_thread and values[i] <= sell_thread:
-                signal_events.sell(product_code=self.product_code, time=self.candles[i].time, price=self.candles[i].close, size=0.01, indicator='', save=False)
+                signal_events.sell(product_code=self.product_code, time=self.candles[i].time, price=self.candles[i].close, size=0.1, indicator='', save=False)
 
         return signal_events
 
@@ -362,10 +362,10 @@ class DataFrameCandle(object):
 
         for i in range(1, len(self.candles)):
             if macd[i] < 0 and macd_signal[i] < 0 and macd[i-1] < macd_signal[i-1] and macd[i] >= macd_signal[i]:
-                signal_events.buy(product_code=self.product_code, time=self.candles[i].time, price=self.candles[i].close, size=0.01, indicator='', save=False)
+                signal_events.buy(product_code=self.product_code, time=self.candles[i].time, price=self.candles[i].close, size=0.1, indicator='', save=False)
 
             if macd[i] > 0 and macd_signal[i] > 0 and macd[i-1] > macd_signal[i-1] and macd[i] <= macd_signal[i]:
-                signal_events.sell(product_code=self.product_code, time=self.candles[i].time, price=self.candles[i].close, size=0.01, indicator='', save=False)
+                signal_events.sell(product_code=self.product_code, time=self.candles[i].time, price=self.candles[i].close, size=0.1, indicator='', save=False)
 
         return signal_events
 
