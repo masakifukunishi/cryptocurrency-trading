@@ -2,7 +2,7 @@ import logging
 import sys
 from threading import Thread
 
-from app.controllers.streamdata import stream
+from app.controllers.bitflyer.streamdata import stream
 from app.controllers.initialprocess import InitialProcess
 from app.controllers.dataprocess import DataProcess
 

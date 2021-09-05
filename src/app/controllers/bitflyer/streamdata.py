@@ -3,7 +3,7 @@ import logging
 from threading import Lock
 from threading import Thread
 
-from app.controllers.ai import AI
+from app.controllers.bitflyer.ai import AI
 from app.models.candle import create_candle_with_duration
 from app.models.candle import create_initial_candle_with_duration
 from bitflyer.bitflyer import Ticker
