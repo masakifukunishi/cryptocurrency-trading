@@ -17,8 +17,6 @@ import settings.settings as settings
 
 logger = logging.getLogger(__name__)
 
-ORDER_CLOSE = 'CLOSE'
-
 class Margin(object):
     def __init__(self, available):
         self.available = int(available)
