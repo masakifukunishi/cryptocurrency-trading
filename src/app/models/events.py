@@ -235,7 +235,7 @@ class SignalEvents(object):
         if not signals:
             signals = None
 
-        if settings.type == constants.TRADE_TYPE_CASH:
+        if settings.type == constants.TRADE_TYPE_BUY:
             profit = self.profit
             if not self.profit:
                 profit = None

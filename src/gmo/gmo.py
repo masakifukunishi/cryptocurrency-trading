@@ -101,14 +101,14 @@ class Order(object):
 class OrderTimeoutError(Exception):
     """Order timeout error"""
 
-class Position(object):
-    def __init__(self, product_code, side, size, price='', execution_type=None, position_id=None):
-        self.product_code = product_code
-        self.side = side
-        self.size = size
-        self.price = price
-        self.execution_type = execution_type
-        self.position_id = position_id
+# class Position(object):
+#     def __init__(self, product_code, side, size, price='', execution_type=None, position_id=None):
+#         self.product_code = product_code
+#         self.side = side
+#         self.size = size
+#         self.price = price
+#         self.execution_type = execution_type
+#         self.position_id = position_id
 
 class APIClient(object):
     def __init__(self, api_key, api_secret):
@@ -122,6 +122,7 @@ class APIClient(object):
         # path
         self.send_order_path = settings.gmo_send_order_path
         self.send_close_order_path = settings.gmo_send_close_order_path
+        self.send_bulk_close_order_path = settings.gmo_send_bulk_close_order_path
         self.get_margin_path = settings.gmo_get_margin_path
         self.get_ticker_path = settings.gmo_get_ticker_path
         self.get_order_path = settings.gmo_get_order_path
@@ -232,46 +233,78 @@ class APIClient(object):
         
         return order
 
-    def send_close_order(self, position: Position):
+    # def send_close_order(self, position: Position):
+    #     method = 'POST'
+    #     end_point = self.private_end_point
+    #     path = self.send_close_order_path
+
+    #     if position.side == constants.BUY:
+    #         side = 'SELL'
+    #     if position.side == constants.SELL:
+    #         side = 'BUY'
+
+    #     request_body = {
+    #         'symbol': position.product_code,
+    #         'side': side,
+    #         'executionType': position.execution_type,
+    #         'size': position.size,
+    #         # "timeInForce": "FAK",
+    #         'settlePosition': [
+    #             {
+    #                 'positionId': position.position_id,
+    #                 'size': position.size
+    #             }
+    #         ]
+    #     }
+    #     logger.info(f'action=send_close_order status=run time={datetime.now()}')
+    #     headers = self.make_headers(method, path, request_body)
+    #     try:
+    #         resp = requests.post(end_point + path, headers=headers, data=json.dumps(request_body))
+    #     except Exception as e:
+    #         logger.error(f'action=send_close_order error={e}')
+    #         raise
+    #     time.sleep(1)
+    #     order_id = resp.json()['data']
+    #     order = self.get_order(order_id)
+    #     logger.info(f'action=send_close_order status=end time={datetime.now()}')
+    #     if not order:
+    #         logger.error('action=send_close_order error=timeout')
+    #         raise OrderTimeoutError
+        
+    #     return order
+
+    def send_bulk_close_order(self, last_event):
         method = 'POST'
         end_point = self.private_end_point
-        path = self.send_close_order_path
+        path = self.send_bulk_close_order_path
 
-        if position.side == constants.BUY:
+        if last_event.side == constants.BUY:
             side = 'SELL'
-        if position.side == constants.SELL:
+        if last_event.side == constants.SELL:
             side = 'BUY'
 
         request_body = {
-            'symbol': position.product_code,
+            'symbol': last_event.product_code,
             'side': side,
-            'executionType': position.execution_type,
-            'size': position.size,
-            # "timeInForce": "FAK",
-            'settlePosition': [
-                {
-                    'positionId': position.position_id,
-                    'size': position.size
-                }
-            ]
+            'executionType': 'MARKET',
+            'size': last_event.size
         }
-        logger.info(f'action=send_close_order status=run time={datetime.now()}')
+        logger.info(f'action=send_bulk_close_order status=run time={datetime.now()}')
         headers = self.make_headers(method, path, request_body)
         try:
             resp = requests.post(end_point + path, headers=headers, data=json.dumps(request_body))
         except Exception as e:
-            logger.error(f'action=send_close_order error={e}')
+            logger.error(f'action=send_bulk_close_order error={e}')
             raise
         time.sleep(1)
         order_id = resp.json()['data']
         order = self.get_order(order_id)
-        logger.info(f'action=send_close_order status=end time={datetime.now()}')
+        logger.info(f'action=send_bulk_close_order status=end time={datetime.now()}')
         if not order:
-            logger.error('action=send_close_order error=timeout')
+            logger.error('action=send_bulk_close_order error=timeout')
             raise OrderTimeoutError
         
         return order
-
 
     # def wait_order_complete(self, order_id) -> Order:
     #     self.get_order(order_id)
@@ -338,34 +371,34 @@ class APIClient(object):
         )
         return order
 
-    def get_open_positions(self, order_id) -> Order:
-        logger.info(f'action=get_open_positions status=run product_code={self.product_code}')
-        method = 'GET'
-        end_point = self.private_end_point
-        path = self.get_open_positions_path
-        parameters = { "symbol": self.product_code }
-        headers = self.make_headers(method, path)
-        try:
-            resp = requests.get(end_point + path, headers=headers, params=parameters)
-            logger.info(f'action=get_open_positions resp={resp}')
+    # def get_open_positions(self, order_id) -> Order:
+    #     logger.info(f'action=get_open_positions status=run product_code={self.product_code}')
+    #     method = 'GET'
+    #     end_point = self.private_end_point
+    #     path = self.get_open_positions_path
+    #     parameters = { "symbol": self.product_code }
+    #     headers = self.make_headers(method, path)
+    #     try:
+    #         resp = requests.get(end_point + path, headers=headers, params=parameters)
+    #         logger.info(f'action=get_open_positions resp={resp}')
 
-        except Exception as e:
-            logger.error(f'action=get_open_positions error={e}')
-            raise
+    #     except Exception as e:
+    #         logger.error(f'action=get_open_positions error={e}')
+    #         raise
 
-        if not resp:
-            return resp
+    #     if not resp:
+    #         return resp
 
-        print(resp.json()['data'])
-        resp = resp.json()['data']['list'][0]
-        position = Position(
-            product_code=resp['symbol'],
-            side=resp['side'],
-            size=float(resp['size']),
-            price=float(resp['price']),
-            position_id=resp['positionId'],
-        )
-        return position
+    #     print(resp.json()['data'])
+    #     resp = resp.json()['data']['list'][0]
+    #     position = Position(
+    #         product_code=resp['symbol'],
+    #         side=resp['side'],
+    #         size=float(resp['size']),
+    #         price=float(resp['price']),
+    #         position_id=resp['positionId'],
+    #     )
+    #     return position
 
     def make_headers(self, method, path, request_body=None):
         timestamp = '{0}000'.format(int(time.mktime(datetime.now().timetuple())))

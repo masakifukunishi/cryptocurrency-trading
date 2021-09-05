@@ -15,6 +15,7 @@ private_end_point = https://api.coin.z.com/private
 kline_path = /v1/klines?symbol={currency}&interval={duration}&date={date}
 send_order_path = /v1/order
 send_close_order_path = /v1/closeOrder
+send_bulk_close_order_path = /v1/closeBulkOrder
 get_order_path = /v1/orders
 get_executions_path = /v1/executions
 get_open_positions_path = /v1/openPositions

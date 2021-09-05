@@ -115,8 +115,7 @@ class AI(object):
 
             if next_order_settle_type == constants.CLOSE:
                 last_event = self.signal_events.signals[-1]
-                position = self.API.get_open_positions(last_event.order_id)
-                resp = self.API.send_close_order(position)
+                resp = self.API.send_bulk_close_order(last_event)
 
             if not resp:
                 logger.error(f'action=buy status=error responce={resp}')
@@ -124,7 +123,7 @@ class AI(object):
             logger.info(f'action=buy responce={resp}')
             could_buy = self.signal_events.buy(product_code = self.product_code,
                                                time = candle.time,
-                                               price = candle.price,
+                                               price = candle.close,
                                                size = resp.size,
                                                order_id = resp.order_id,
                                                settle_type = resp.settle_type,
@@ -170,8 +169,7 @@ class AI(object):
 
             if next_order_settle_type == constants.CLOSE:
                 last_event = self.signal_events.signals[-1]
-                position = self.API.get_open_positions(last_event.order_id)
-                resp = self.API.send_close_order(position)
+                resp = self.API.send_bulk_close_order(last_event)
             
             if not resp:
                 logger.error(f'action=buy status=error responce={resp}')
@@ -179,7 +177,7 @@ class AI(object):
             logger.info(f'action=sell responce={resp}')
             could_sell = self.signal_events.sell(product_code = self.product_code,
                                                time = candle.time,
-                                               price = candle.price,
+                                               price = candle.close,
                                                size = resp.size,
                                                order_id = resp.order_id,
                                                settle_type = resp.settle_type,
