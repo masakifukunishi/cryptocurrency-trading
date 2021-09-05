@@ -57,7 +57,7 @@ class AI(object):
         self.environment = environment
         self.fx_leverage = fx_leverage
         self.fx_actual_leverage = fx_actual_leverage
-        self.start_trade = None
+        self.start_trade = datetime.datetime.utcnow()
         self.candle_cls = factory_candle_class(self.product_code, self.duration)
         self.update_optimize_params(False)
         self.decimal_point = 2
@@ -126,8 +126,8 @@ class AI(object):
                                                time = candle.time,
                                                price = resp.price,
                                                size = resp.size,
-                                               order_id = resp.orderId,
-                                               settle_type = resp.settleType,
+                                               order_id = resp.order_id,
+                                               settle_type = resp.settle_type,
                                                indicator = indicator,
                                                save=True)
             return could_buy
@@ -181,8 +181,8 @@ class AI(object):
                                                time = candle.time,
                                                price = resp.price,
                                                size = resp.size,
-                                               order_id = resp.orderId,
-                                               settle_type = resp.settleType,
+                                               order_id = resp.order_id,
+                                               settle_type = resp.settle_type,
                                                indicator = indicator,
                                                save=True)
             return could_sell
@@ -281,7 +281,6 @@ class AI(object):
                 logger.info(f'action=buy buy_point={buy_point} environment={self.environment} status=completion')
 
                 last_event = self.signal_events.signals[-1]
-                print(last_event.settle_type)
                 if last_event.settle_type == constants.OPEN:
                     self.stop_limit_sell = df.candles[i].close * self.stop_limit_percent_sell
                 if last_event.settle_type == constants.CLOSE:
@@ -297,7 +296,6 @@ class AI(object):
                 logger.info(f'action=sell sell_point={sell_point} environment={self.environment} status=completion')
 
                 last_event = self.signal_events.signals[-1]
-                print(last_event.settle_type)
                 if last_event.settle_type == constants.OPEN:
                     self.stop_limit_buy = df.candles[i].close * self.stop_limit_percent_buy
                 if last_event.settle_type == constants.CLOSE:

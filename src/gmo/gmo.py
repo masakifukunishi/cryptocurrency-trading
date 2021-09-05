@@ -115,6 +115,7 @@ class APIClient(object):
         self.api_key = api_key
         self.api_secret = api_secret
         self.product_code = settings.product_code
+        self.fx_actual_leverage = settings.fx_actual_leverage
         self.public_end_point = settings.gmo_public_end_point
         self.private_end_point = settings.gmo_private_end_point
         self.trade_duration = settings.trade_duration
@@ -217,7 +218,9 @@ class APIClient(object):
         except Exception as e:
             logger.error(f'action=send_order error={e}')
             raise
-        time.sleep(1)
+        
+        logger.info(f'action=send_order resp={resp.json()}')
+
         order_id = resp.json()['data']
         order = self.get_executions(order_id)
         logger.info(f'action=send_order status=end time={datetime.now()}')
@@ -321,7 +324,8 @@ class APIClient(object):
         headers = self.make_headers(method, path)
         try:
             resp = requests.get(end_point + path, headers=headers, params=parameters)
-            logger.info(f'action=get_executions resp={resp}')
+            logger.info(f'action=get_executions resp={resp.json()}')
+            resp = resp.json()['data']['list'][0]
 
         except Exception as e:
             logger.error(f'action=get_executions error={e}')
@@ -330,7 +334,7 @@ class APIClient(object):
         if not resp:
             return resp
 
-        resp = resp.json()['data']['list'][0]
+        print(resp)
         order = Order(
             product_code=resp['symbol'],
             side=resp['side'],
@@ -350,10 +354,10 @@ class APIClient(object):
         headers = self.make_headers(method, path)
         try:
             resp = requests.get(end_point + path, headers=headers, params=parameters)
-            logger.info(f'action=get_executions resp={resp}')
+            logger.info(f'action=get_open_positions resp={resp}')
 
         except Exception as e:
-            logger.error(f'action=get_executions error={e}')
+            logger.error(f'action=get_open_positions error={e}')
             raise
 
         if not resp:
@@ -388,7 +392,7 @@ class APIClient(object):
         available = float(margin.available * use_percent)
         ticker = self.get_ticker(self.product_code)
         ask = ticker.ask
-        size = available / ask * fx_actual_leverage
+        size = available / ask * self.fx_actual_leverage
         size = math.floor(size * 10 ** decimal_point) / (10 ** decimal_point)
         return size
 

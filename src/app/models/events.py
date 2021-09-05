@@ -203,7 +203,7 @@ class SignalEvents(object):
     @property
     def profit_fx(self):
         total = 0.0
-        before_sell = 0.0
+        before_close = 0.0
         is_holding = False
         for i in range(len(self.signals)):
             signal_event = self.signals[i]
