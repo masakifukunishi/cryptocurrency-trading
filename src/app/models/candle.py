@@ -89,44 +89,43 @@ class BaseCandleMixin(object):
             'volume': self.volume,
         }
     
-class BtcJpyBaseCandle10S(BaseCandleMixin, Base):
-    __tablename__ = 'BTC_JPY_10S'
+class BaseCandle10S(BaseCandleMixin, Base):
+    __tablename__ = 'CANDLES_10S'
     
-class BtcJpyBaseCandle1M(BaseCandleMixin, Base):
-    __tablename__ = 'BTC_JPY_1M'
+class BaseCandle1M(BaseCandleMixin, Base):
+    __tablename__ = 'CANDLES_1M'
 
-class BtcJpyBaseCandle3M(BaseCandleMixin, Base):
-    __tablename__ = 'BTC_JPY_3M'
+class BaseCandle3M(BaseCandleMixin, Base):
+    __tablename__ = 'CANDLES_3M'
 
-class BtcJpyBaseCandle5M(BaseCandleMixin, Base):
-    __tablename__ = 'BTC_JPY_5M'
+class BaseCandle5M(BaseCandleMixin, Base):
+    __tablename__ = 'CANDLES_5M'
 
-class BtcJpyBaseCandle15M(BaseCandleMixin, Base):
-    __tablename__ = 'BTC_JPY_15M'
+class BaseCandle15M(BaseCandleMixin, Base):
+    __tablename__ = 'CANDLES_15M'
 
-class BtcJpyBaseCandle30M(BaseCandleMixin, Base):
-    __tablename__ = 'BTC_JPY_30M'
+class BaseCandle30M(BaseCandleMixin, Base):
+    __tablename__ = 'CANDLES_30M'
 
-class BtcJpyBaseCandle1H(BaseCandleMixin, Base):
-    __tablename__ = 'BTC_JPY_1H'
+class BaseCandle1H(BaseCandleMixin, Base):
+    __tablename__ = 'CANDLES_1H'
     
 
 def factory_candle_class(product_code, duration):
-    if product_code == constants.PRODUCT_CODE_BTC_JPY:
-        if duration == constants.DURATION_10S:
-            return BtcJpyBaseCandle10S
-        if duration == constants.DURATION_1M:
-            return BtcJpyBaseCandle1M
-        if duration == constants.DURATION_3M:
-            return BtcJpyBaseCandle3M
-        if duration == constants.DURATION_5M:
-            return BtcJpyBaseCandle5M
-        if duration == constants.DURATION_15M:
-            return BtcJpyBaseCandle15M
-        if duration == constants.DURATION_30M:
-            return BtcJpyBaseCandle30M
-        if duration == constants.DURATION_1H:
-            return BtcJpyBaseCandle1H
+    if duration == constants.DURATION_10S:
+        return BaseCandle10S
+    if duration == constants.DURATION_1M:
+        return BaseCandle1M
+    if duration == constants.DURATION_3M:
+        return BaseCandle3M
+    if duration == constants.DURATION_5M:
+        return BaseCandle5M
+    if duration == constants.DURATION_15M:
+        return BaseCandle15M
+    if duration == constants.DURATION_30M:
+        return BaseCandle30M
+    if duration == constants.DURATION_1H:
+        return BaseCandle1H
 
 def create_candle_with_duration(product_code, duration, ticker):
     cls = factory_candle_class(product_code, duration)
