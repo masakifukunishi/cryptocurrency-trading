@@ -122,6 +122,9 @@ class SignalEvents(object):
         return False
 
     def get_next_order_settle_type(self):
+        if settings.trade_type != constants.TRADE_TYPE_FX:
+            return ''
+            
         if len(self.signals) == 0:
             return constants.OPEN
 
@@ -133,8 +136,14 @@ class SignalEvents(object):
             return constants.OPEN
 
     def buy(self, product_code, time, price, size, order_id=None, settle_type=None, indicator=None, save=True):
-        # if not self.can_buy(time):
-        #     return False
+
+        if settings.trade_type == constants.TRADE_TYPE_BUY:
+            if not self.can_buy(time):
+                return False
+
+        if settings.trade_type == constants.TRADE_TYPE_FX:
+            if not self.can_buy_fx(time):
+                return False
 
         signal_event = SignalEvent(time=time, 
                                    product_code=product_code, 
@@ -152,8 +161,14 @@ class SignalEvents(object):
         return True
 
     def sell(self, product_code, time, price, size, order_id=None, settle_type=None, indicator=None, save=True):
-        # if not self.can_sell(time):
-        #     return False
+
+        if settings.trade_type == constants.TRADE_TYPE_BUY:
+            if not self.can_sell(time):
+                return False
+
+        if settings.trade_type == constants.TRADE_TYPE_FX:
+            if not self.can_sell_fx(time):
+                return False
 
         signal_event = SignalEvent(time=time,
                                    product_code=product_code,
@@ -235,12 +250,12 @@ class SignalEvents(object):
         if not signals:
             signals = None
 
-        if settings.type == constants.TRADE_TYPE_BUY:
+        if settings.trade_type == constants.TRADE_TYPE_BUY:
             profit = self.profit
             if not self.profit:
                 profit = None
 
-        if settings.type == constants.TRADE_TYPE_FX:
+        if settings.trade_type == constants.TRADE_TYPE_FX:
             profit = self.profit_fx
             if not self.profit_fx:
                 profit = None
