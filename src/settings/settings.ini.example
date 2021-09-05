@@ -1,0 +1,55 @@
+[bitflyer]
+api_key = 
+api_secret = 
+realtime_api_end_point = wss://ws.lightstream.bitflyer.com/json-rpc
+realtime_ticker_product_code = lightning_ticker_BTC_JPY
+commission_percentage = 0.001
+maintenance_start_time = 19:00
+maintenance_end_time = 19:09
+
+[gmo]
+api_key = 
+api_secret = 
+public_end_point = https://api.coin.z.com/public
+private_end_point = https://api.coin.z.com/private
+kline_path = /v1/klines?symbol={currency}&interval={duration}&date={date}
+send_order_path = /v1/order
+send_close_order_path = /v1/closeOrder
+get_order_path = /v1/orders
+get_executions_path = /v1/executions
+get_open_positions_path = /v1/openPositions
+get_margin_path = /v1/account/margin
+get_ticker_path = /v1/ticker?symbol={product_code}
+realtime_api_end_point = wss://api.coin.z.com/ws/public/v1
+
+[cryptowatch]
+bitflyer_btcjpy_ohlc_url = https://api.cryptowat.ch/markets/bitflyer/btcjpy/ohlc
+
+[fx]
+leverage = 2.0
+actual_leverage = 1.7
+
+[currency]
+product_code = XRP_JPY
+buy_currency = JPY
+sell_currency = BTC
+
+[db]
+name = cryptocurrency_data.sql
+driver = sqlite3
+
+[trading]
+type = fx
+environment = dev
+trade_duration = 15m
+use_percent = 1.0
+stop_limit_percent_sell = 0.98
+stop_limit_percent_buy = 1.02
+num_ranking = 3
+get_ticker_duration = 4
+execute_delete_candle_duration = 14400
+
+initial_period = 500
+past_period = 250
+minimum_period = 200
+storage_period = 250
