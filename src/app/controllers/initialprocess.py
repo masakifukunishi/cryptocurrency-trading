@@ -8,6 +8,8 @@ class InitialProcess(object):
     
     def set_initial_candles(self):
         for duration in constants.DURATIONS:
+            if not (duration == settings.trade_duration):
+                continue
             duration_time = constants.TRADE_MAP[duration]['granularity']
             if duration_time in constants.CRYPTOWATCH_ENABLE_PERIOD:
                 candle = Candle(duration_time)

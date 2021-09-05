@@ -44,6 +44,8 @@ class StreamData(object):
 
     def trade(self, ticker: Ticker, ai: AI):
         for duration in constants.DURATIONS:
+            if not (duration == settings.trade_duration):
+                continue
             is_created = create_candle_with_duration(ticker.product_code, duration, ticker)
             if is_created and duration == settings.trade_duration:
                 thread = Thread(target=self._trade, args=(ai,))

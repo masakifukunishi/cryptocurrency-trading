@@ -130,6 +130,8 @@ class APIClient(object):
     def set_initial_candles(self):
         logger.info('action=set_initial_candles status=start')
         for duration in constants.DURATIONS:
+            if not (duration == settings.trade_duration):
+                continue
             duration_time = constants.TRADE_MAP[duration]['granularity']
             if duration_time in constants.CRYPTOWATCH_ENABLE_PERIOD:
                 candles = self.get_initial_candles()
