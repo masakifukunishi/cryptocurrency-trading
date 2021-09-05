@@ -332,7 +332,7 @@ class APIClient(object):
         order = Order(
             product_code=resp['symbol'],
             side=resp['side'],
-            size=float(resp['executedSize']),
+            size=float(resp['size']),
             price=float(resp['price']),
             execution_type=resp['executionType'],
             settle_type=resp['settleType'],

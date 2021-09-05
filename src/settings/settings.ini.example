@@ -40,7 +40,7 @@ name = cryptocurrency_data.sql
 driver = sqlite3
 
 [trading]
-type = fx
+type = FX
 environment = dev
 trade_duration = 15m
 use_percent = 1.0
