@@ -124,7 +124,7 @@ class AI(object):
             logger.info(f'action=buy responce={resp}')
             could_buy = self.signal_events.buy(product_code = self.product_code,
                                                time = candle.time,
-                                               price = resp.price,
+                                               price = candle.price,
                                                size = resp.size,
                                                order_id = resp.order_id,
                                                settle_type = resp.settle_type,
@@ -179,7 +179,7 @@ class AI(object):
             logger.info(f'action=sell responce={resp}')
             could_sell = self.signal_events.sell(product_code = self.product_code,
                                                time = candle.time,
-                                               price = resp.price,
+                                               price = candle.price,
                                                size = resp.size,
                                                order_id = resp.order_id,
                                                settle_type = resp.settle_type,

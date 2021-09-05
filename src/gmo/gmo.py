@@ -222,7 +222,9 @@ class APIClient(object):
         logger.info(f'action=send_order resp={resp.json()}')
 
         order_id = resp.json()['data']
-        order = self.get_executions(order_id)
+        logger.info(f'action=send_order order_id={order_id}')
+
+        order = self.get_order(order_id)
         logger.info(f'action=send_order status=end time={datetime.now()}')
         if not order:
             logger.error('action=send_order error=timeout')
@@ -262,7 +264,7 @@ class APIClient(object):
             raise
         time.sleep(1)
         order_id = resp.json()['data']
-        order = self.get_executions(order_id)
+        order = self.get_order(order_id)
         logger.info(f'action=send_close_order status=end time={datetime.now()}')
         if not order:
             logger.error('action=send_close_order error=timeout')
@@ -274,45 +276,36 @@ class APIClient(object):
     # def wait_order_complete(self, order_id) -> Order:
     #     self.get_order(order_id)
 
-    # def get_order(self, order_id) -> Order:
-    #     logger.info(f'action=get_order status=run product_code={self.product_code} order_id={order_id}')
+    def get_order(self, order_id) -> Order:
+        logger.info(f'action=get_order status=run product_code={self.product_code} order_id={order_id}')
+        method = 'GET'
+        end_point = self.private_end_point
+        path = self.get_order_path
+        parameters = { "orderId": order_id }
 
-    #     timestamp = '{0}000'.format(int(time.mktime(datetime.now().timetuple())))
-    #     method = 'GET'
-    #     end_point = self.private_end_point
-    #     path = self.get_order_path
+        headers = self.make_headers(method, path)
+        try:
+            resp = requests.get(end_point + path, headers=headers, params=parameters)
+            logger.info(f'action=get_order resp={resp.json()}')
+            resp = resp.json()['data']['list'][0]
 
-    #     text = timestamp + method + path
-    #     sign = hmac.new(bytes(self.api_secret.encode('ascii')), bytes(text.encode('ascii')), hashlib.sha256).hexdigest()
-    #     parameters = { "orderId": order_id }
+        except Exception as e:
+            logger.error(f'action=get_order error={e}')
+            raise
 
-    #     headers = {
-    #         'API-KEY': self.api_key,
-    #         'API-TIMESTAMP': timestamp,
-    #         'API-SIGN': sign
-    #     }
-    #     try:
-    #         resp = requests.get(end_point + path, headers=headers, params=parameters)
-    #         logger.info(f'action=get_order resp={resp}')
+        if not resp:
+            return resp
 
-    #     except Exception as e:
-    #         logger.error(f'action=get_order error={e}')
-    #         raise
-
-    #     if not resp:
-    #         return resp
-
-    #     resp = resp.json()['data']['list'][0]
-    #     order = Order(
-    #         product_code=resp['symbol'],
-    #         side=resp['side'],
-    #         size=float(resp['executedSize']),
-    #         price=float(resp['price']),
-    #         execution_type=resp['executionType'],
-    #         settle_type=resp['settleType'],
-    #         order_id=resp['order_id']
-    #     )
-    #     return order
+        order = Order(
+            product_code=resp['symbol'],
+            side=resp['side'],
+            size=float(resp['executedSize']),
+            price=float(resp['price']),
+            execution_type=resp['executionType'],
+            settle_type=resp['settleType'],
+            order_id=resp['orderId']
+        )
+        return order
 
     def get_executions(self, order_id) -> Order:
         logger.info(f'action=get_executions status=run product_code={self.product_code} order_id={order_id}')
@@ -363,6 +356,7 @@ class APIClient(object):
         if not resp:
             return resp
 
+        print(resp.json()['data'])
         resp = resp.json()['data']['list'][0]
         position = Position(
             product_code=resp['symbol'],
