@@ -35,7 +35,7 @@ class Ticker(object):
 
     @property
     def time(self):
-        return datetime.fromtimestamp(self.timestamp)
+        return datetime.utcfromtimestamp(self.timestamp)
 
     def truncate_date_time(self, duration):
         ticker_time = self.time
