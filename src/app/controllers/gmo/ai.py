@@ -50,7 +50,7 @@ class AI(object):
         self.duration = duration
         self.past_period = past_period
         self.optimized_trade_params = None
-        self.stop_limit_buy = 0
+        self.stop_limit_buy = 999999999
         self.stop_limit_sell = 0
         self.stop_limit_percent_sell = stop_limit_percent_sell
         self.stop_limit_percent_buy = stop_limit_percent_buy
@@ -270,7 +270,7 @@ class AI(object):
                     sell_point += 1
                     trade_log += f'action=trade side=sell indicator=macd fast_period={params.macd_fast_period} slow_period={params.macd_slow_period} signal_period={params.macd_signal_period}\n'
 
-            if buy_point > 0:
+            if buy_point > 0 or self.stop_limit_buy < df.candles[i].close:
                 indicator = trade_log.rstrip('\n')
                 if not self.buy(df.candles[i], indicator):
                     continue
@@ -282,7 +282,7 @@ class AI(object):
                 if last_event.settle_type == constants.OPEN:
                     self.stop_limit_sell = df.candles[i].close * self.stop_limit_percent_sell
                 if last_event.settle_type == constants.CLOSE:
-                    self.stop_limit_buy = 0.0
+                    self.stop_limit_buy = 999999999
                     self.update_optimize_params(is_continue=True)
 
             if sell_point > 0 or self.stop_limit_sell > df.candles[i].close:

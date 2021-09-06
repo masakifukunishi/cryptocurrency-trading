@@ -100,7 +100,7 @@ class SignalEvents(object):
             return True
 
         last_signal = self.signals[-1]
-        if last_signal.side == constants.SELL and last_signal.time <= time:
+        if last_signal.side == constants.SELL and last_signal.time < time:
             return True
 
         if last_signal.side == constants.BUY and last_signal.settle_type == constants.CLOSE and last_signal.time <= time:
@@ -113,7 +113,7 @@ class SignalEvents(object):
             return True
 
         last_signal = self.signals[-1]
-        if last_signal.side == constants.BUY and last_signal.time <= time:
+        if last_signal.side == constants.BUY and last_signal.time < time:
             return True
 
         if last_signal.side == constants.SELL and last_signal.settle_type == constants.CLOSE and last_signal.time <= time:
