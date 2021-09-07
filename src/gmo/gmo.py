@@ -143,7 +143,8 @@ class APIClient(object):
     def get_initial_candles(self):
         try:
             candles = []
-            now = datetime.now(pytz.timezone('Asia/Tokyo'))
+            # The GMO's candles period are from 6AM to 6PM
+            now = datetime.now(pytz.timezone('Asia/Tokyo')) - timedelta(hours=6)
             if self.trade_duration[-1] == 'm':
                 duration = self.trade_duration.replace('m', 'min')
 
