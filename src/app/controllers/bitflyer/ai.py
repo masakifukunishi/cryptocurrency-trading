@@ -189,7 +189,7 @@ class AI(object):
 
         for i in range(1, len(df.candles)):
             buy_point, sell_point = 0, 0
-            trade_log = ''
+            trade_log, indicator = '', ''
             if params.ema_enable and params.ema_period_1 <= i and params.ema_period_2 <= i:
                 if ema_values_1[i - 1] < ema_values_2[i - 1] and ema_values_1[i] >= ema_values_2[i]:
                     buy_point += 1
