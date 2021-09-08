@@ -27,11 +27,11 @@ realtime_api_end_point = wss://api.coin.z.com/ws/public/v1
 bitflyer_btcjpy_ohlc_url = https://api.cryptowat.ch/markets/bitflyer/btcjpy/ohlc
 
 [fx]
-leverage = 2.0
-actual_leverage = 1.7
+leverage = 
+actual_leverage =
 
 [currency]
-product_code = XRP_JPY
+product_code = BTC_JPY
 buy_currency = JPY
 sell_currency = BTC
 
@@ -40,17 +40,18 @@ name = cryptocurrency_data.sql
 driver = sqlite3
 
 [trading]
-trade_type = FX
-environment = dev
-trade_duration = 15m
+trade_type = fx
+environment = production
+trade_duration = 5m
 use_percent = 1.0
-stop_limit_percent_sell = 0.98
-stop_limit_percent_buy = 1.02
+stop_limit_percent_sell = 
+stop_limit_percent_buy = 
 num_ranking = 3
 get_ticker_duration = 4
 execute_delete_candle_duration = 14400
 
-initial_period = 500
-past_period = 250
-minimum_period = 200
-storage_period = 250
+stop_limit_target_preiod = 
+initial_period = 
+past_period = 
+minimum_period = 
+storage_period = 
