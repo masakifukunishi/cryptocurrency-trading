@@ -9,6 +9,7 @@ from app.models.events import SignalEvents
 from utils.utils import Serializer
 from tradingalgo.algo import ichimoku_cloud
 
+import settings.constants as constants
 import settings.settings as settings
 
 logger = logging.getLogger(__name__)
@@ -74,6 +75,7 @@ class DataFrameCandle(object):
     def __init__(self, product_code=settings.product_code, duration=settings.trade_duration):
         self.product_code = product_code
         self.duration = duration
+        self.trade_type = settings.trade_type
         self.candle_cls = factory_candle_class(self.product_code, self.duration)
         self.candles = []
         self.smas = []
@@ -137,6 +139,13 @@ class DataFrameCandle(object):
         for candle in self.candles:
             values.append(candle.volume)
         return values
+
+    def get_profit(self, signal_events):
+        if self.trade_type == constants.TRADE_TYPE_BUY:
+            return signal_events.profit
+
+        if self.trade_type == constants.TRADE_TYPE_FX:
+            return signal_events.profit_fx
 
     def add_sma(self, period: int):
         if len(self.closes) > period:
@@ -223,10 +232,12 @@ class DataFrameCandle(object):
                 continue
 
             if ema_value_1[i-1] < ema_value_2[i-1] and ema_value_1[i] >= ema_value_2[i]:
-                signal_events.buy(product_code=self.product_code, time=self.candles[i].time, price=self.candles[i].close, size=0.01, indicator='', save=False)
+                settle_type = signal_events.get_next_order_settle_type()
+                signal_events.buy(product_code=self.product_code, time=self.candles[i].time, price=self.candles[i].close, size=0.1, order_id='', settle_type=settle_type, indicator='', save=False)
 
             if ema_value_1[i-1] > ema_value_2[i-1] and ema_value_1[i] <= ema_value_2[i]:
-                signal_events.sell(product_code=self.product_code, time=self.candles[i].time, price=self.candles[i].close, size=0.01, indicator='', save=False)
+                settle_type = signal_events.get_next_order_settle_type()
+                signal_events.sell(product_code=self.product_code, time=self.candles[i].time, price=self.candles[i].close, size=0.1, order_id='', settle_type=settle_type, indicator='', save=False)
 
         return signal_events
 
@@ -240,7 +251,7 @@ class DataFrameCandle(object):
                 signal_events = self.back_test_ema(period_1, period_2)
                 if signal_events is None:
                     continue
-                profit = signal_events.profit
+                profit = self.get_profit(signal_events)
                 if performance < profit:
                     performance = profit
                     best_period_1 = period_1
@@ -259,10 +270,12 @@ class DataFrameCandle(object):
                 continue
 
             if bb_down[i-1] > self.candles[i-1].close and bb_down[i] <= self.candles[i].close:
-                signal_events.buy(product_code=self.product_code, time=self.candles[i].time, price=self.candles[i].close, size=0.01, indicator='', save=False)
+                settle_type = signal_events.get_next_order_settle_type()
+                signal_events.buy(product_code=self.product_code, time=self.candles[i].time, price=self.candles[i].close, size=0.1, order_id='', settle_type=settle_type, indicator='', save=False)
 
             if bb_up[i-1] < self.candles[i-1].close and bb_up[i] >= self.candles[i].close:
-                signal_events.sell(product_code=self.product_code, time=self.candles[i].time, price=self.candles[i].close, size=0.01, indicator='', save=False)
+                settle_type = signal_events.get_next_order_settle_type()
+                signal_events.sell(product_code=self.product_code, time=self.candles[i].time, price=self.candles[i].close, size=0.1, order_id='', settle_type=settle_type, indicator='', save=False)
 
         return signal_events
 
@@ -276,7 +289,7 @@ class DataFrameCandle(object):
                 signal_events = self.back_test_bb(n, k)
                 if signal_events is None:
                     continue
-                profit = signal_events.profit
+                profit = self.get_profit(signal_events)
                 if performance < profit:
                     performance = profit
                     best_n = n
@@ -296,14 +309,16 @@ class DataFrameCandle(object):
                     senkou_a[i] < self.candles[i].low and
                     senkou_b[i] < self.candles[i].low and
                     tenkan[i] > kijun[i]):
-                signal_events.buy(product_code=self.product_code, time=self.candles[i].time, price=self.candles[i].close, size=0.01, indicator='', save=False)
+                settle_type = signal_events.get_next_order_settle_type()
+                signal_events.buy(product_code=self.product_code, time=self.candles[i].time, price=self.candles[i].close, size=0.1, order_id='', settle_type=settle_type, indicator='', save=False)
 
             if (chikou[i-1] > self.candles[i-1].low and
                     chikou[i] <= self.candles[i].low and
                     senkou_a[i] > self.candles[i].high and
                     senkou_b[i] > self.candles[i].high and
                     tenkan[i] < kijun[i]):
-                signal_events.sell(product_code=self.product_code, time=self.candles[i].time, price=self.candles[i].close, size=0.01, indicator='', save=False)
+                settle_type = signal_events.get_next_order_settle_type()
+                signal_events.sell(product_code=self.product_code, time=self.candles[i].time, price=self.candles[i].close, size=0.1, order_id='', settle_type=settle_type, indicator='', save=False)
 
         return signal_events
 
@@ -311,7 +326,7 @@ class DataFrameCandle(object):
         signal_events = self.back_test_ichimoku()
         if signal_events is None:
             return 0.0
-        return signal_events.profit
+        return self.get_profit(signal_events)
 
     def back_test_rsi(self, period: int, buy_thread: float, sell_thread: float):
         if len(self.candles) <= period:
@@ -325,10 +340,12 @@ class DataFrameCandle(object):
                 continue
 
             if values[i-1] < buy_thread and values[i] >= buy_thread:
-                signal_events.buy(product_code=self.product_code, time=self.candles[i].time, price=self.candles[i].close, size=0.01, indicator='', save=False)
+                settle_type = signal_events.get_next_order_settle_type()
+                signal_events.buy(product_code=self.product_code, time=self.candles[i].time, price=self.candles[i].close, size=0.1, order_id='', settle_type=settle_type, indicator='', save=False)
 
             if values[i-1] > sell_thread and values[i] <= sell_thread:
-                signal_events.sell(product_code=self.product_code, time=self.candles[i].time, price=self.candles[i].close, size=0.01, indicator='', save=False)
+                settle_type = signal_events.get_next_order_settle_type()
+                signal_events.sell(product_code=self.product_code, time=self.candles[i].time, price=self.candles[i].close, size=0.1, order_id='', settle_type=settle_type, indicator='', save=False)
 
         return signal_events
 
@@ -344,7 +361,7 @@ class DataFrameCandle(object):
                     signal_events = self.back_test_rsi(period, buy_thread, sell_thread)
                     if signal_events is None:
                         continue
-                    profit = signal_events.profit
+                    profit = self.get_profit(signal_events)
                     if performance < profit:
                         performance = profit
                         best_period = period
@@ -362,10 +379,12 @@ class DataFrameCandle(object):
 
         for i in range(1, len(self.candles)):
             if macd[i] < 0 and macd_signal[i] < 0 and macd[i-1] < macd_signal[i-1] and macd[i] >= macd_signal[i]:
-                signal_events.buy(product_code=self.product_code, time=self.candles[i].time, price=self.candles[i].close, size=0.01, indicator='', save=False)
+                settle_type = signal_events.get_next_order_settle_type()
+                signal_events.buy(product_code=self.product_code, time=self.candles[i].time, price=self.candles[i].close, size=0.1, order_id='', settle_type=settle_type, indicator='', save=False)
 
             if macd[i] > 0 and macd_signal[i] > 0 and macd[i-1] > macd_signal[i-1] and macd[i] <= macd_signal[i]:
-                signal_events.sell(product_code=self.product_code, time=self.candles[i].time, price=self.candles[i].close, size=0.01, indicator='', save=False)
+                settle_type = signal_events.get_next_order_settle_type()
+                signal_events.sell(product_code=self.product_code, time=self.candles[i].time, price=self.candles[i].close, size=0.1, order_id='', settle_type=settle_type, indicator='', save=False)
 
         return signal_events
 
@@ -381,7 +400,7 @@ class DataFrameCandle(object):
                     signal_events = self.back_test_macd(fast_period, slow_period, signal_period)
                     if signal_events is None:
                         continue
-                    profit = signal_events.profit
+                    profit = self.get_profit(signal_events)
                     if performance < profit:
                         performance = profit
                         best_macd_fast_period = fast_period

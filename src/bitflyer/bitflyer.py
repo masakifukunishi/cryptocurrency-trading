@@ -69,6 +69,13 @@ class Ticker(object):
                 self.time.hour, fifteen_minute)
             time_format = '%Y-%m-%d %H:%M'
 
+        elif duration == constants.DURATION_30M:
+            fifteen_minute = math.floor(self.time.minute / 30) * 30
+            ticker_time = datetime(
+                self.time.year, self.time.month, self.time.day,
+                self.time.hour, fifteen_minute)
+            time_format = '%Y-%m-%d %H:%M'
+
         elif duration == constants.DURATION_1H:
             time_format = '%Y-%m-%d %H'
         else:

@@ -25,6 +25,8 @@ class SignalEvent(Base):
     side = Column(String)
     price = Column(Float)
     size = Column(Float)
+    order_id = Column(Integer)
+    settle_type = Column(String)
     indicator = Column(String)
 
     def save(self):
@@ -39,6 +41,8 @@ class SignalEvent(Base):
             'side': self.side,
             'price': self.price,
             'size': self.size,
+            'order_id': self.order_id,
+            'settle_type': self.settle_type,
             'indicator': self.indicator,
         })
         if not dict_values:
@@ -91,11 +95,64 @@ class SignalEvents(object):
 
         return False
 
-    def buy(self, product_code, time, price, size, indicator, save):
-        if not self.can_buy(time):
-            return False
+    def can_buy_fx(self, time):
+        if len(self.signals) == 0:
+            return True
 
-        signal_event = SignalEvent(time=time, product_code=product_code, side=constants.BUY, price=price, size=size, indicator=indicator)
+        last_signal = self.signals[-1]
+        if last_signal.side == constants.SELL and last_signal.time <= time:
+            return True
+
+        if last_signal.side == constants.BUY and last_signal.settle_type == constants.CLOSE and last_signal.time <= time:
+            return True
+
+        return False
+
+    def can_sell_fx(self, time):
+        if len(self.signals) == 0:
+            return True
+
+        last_signal = self.signals[-1]
+        if last_signal.side == constants.BUY and last_signal.time <= time:
+            return True
+
+        if last_signal.side == constants.SELL and last_signal.settle_type == constants.CLOSE and last_signal.time <= time:
+            return True
+
+        return False
+
+    def get_next_order_settle_type(self):
+        if settings.trade_type != constants.TRADE_TYPE_FX:
+            return ''
+            
+        if len(self.signals) == 0:
+            return constants.OPEN
+
+        last_signal = self.signals[-1]
+        if last_signal.settle_type == constants.OPEN:
+            return constants.CLOSE
+
+        if last_signal.settle_type == constants.CLOSE:
+            return constants.OPEN
+
+    def buy(self, product_code, time, price, size, order_id=None, settle_type=None, indicator=None, save=True):
+
+        if settings.trade_type == constants.TRADE_TYPE_BUY:
+            if not self.can_buy(time):
+                return False
+
+        if settings.trade_type == constants.TRADE_TYPE_FX:
+            if not self.can_buy_fx(time):
+                return False
+
+        signal_event = SignalEvent(time=time, 
+                                   product_code=product_code, 
+                                   side=constants.BUY, 
+                                   price=price, 
+                                   size=size,
+                                   order_id=order_id,
+                                   settle_type=settle_type,
+                                   indicator=indicator)
         if save:
             signal_event.save()
 
@@ -103,11 +160,24 @@ class SignalEvents(object):
 
         return True
 
-    def sell(self, product_code, time, price, size, indicator, save):
-        if not self.can_sell(time):
-            return False
+    def sell(self, product_code, time, price, size, order_id=None, settle_type=None, indicator=None, save=True):
 
-        signal_event = SignalEvent(time=time, product_code=product_code, side=constants.SELL, price=price, size=size, indicator=indicator)
+        if settings.trade_type == constants.TRADE_TYPE_BUY:
+            if not self.can_sell(time):
+                return False
+
+        if settings.trade_type == constants.TRADE_TYPE_FX:
+            if not self.can_sell_fx(time):
+                return False
+
+        signal_event = SignalEvent(time=time,
+                                   product_code=product_code,
+                                   side=constants.SELL,
+                                   price=price,
+                                   size=size,
+                                   order_id=order_id,
+                                   settle_type=settle_type,
+                                   indicator=indicator)
         if save:
             signal_event.save()
 
@@ -146,14 +216,49 @@ class SignalEvents(object):
         return total
 
     @property
+    def profit_fx(self):
+        total = 0.0
+        before_close = 0.0
+        is_holding = False
+        for i in range(len(self.signals)):
+            signal_event = self.signals[i]
+            if signal_event.side == constants.BUY and signal_event.settle_type == constants.OPEN:
+                total -= signal_event.price * signal_event.size
+                is_holding = True
+
+            if signal_event.side == constants.BUY and signal_event.settle_type == constants.CLOSE:
+                total -= signal_event.price * signal_event.size
+                is_holding = False
+                before_close = total
+
+            if signal_event.side == constants.SELL and signal_event.settle_type == constants.OPEN:
+                total += signal_event.price * signal_event.size
+                is_holding = True
+
+            if signal_event.side == constants.SELL and signal_event.settle_type == constants.CLOSE:
+                total += signal_event.price * signal_event.size
+                is_holding = False
+                before_close = total
+                
+        if is_holding:
+            return before_close
+        return total
+
+    @property
     def value(self):
         signals = [s.value for s in self.signals]
         if not signals:
             signals = None
 
-        profit = self.profit
-        if not self.profit:
-            profit = None
+        if settings.trade_type == constants.TRADE_TYPE_BUY:
+            profit = self.profit
+            if not self.profit:
+                profit = None
+
+        if settings.trade_type == constants.TRADE_TYPE_FX:
+            profit = self.profit_fx
+            if not self.profit_fx:
+                profit = None
 
         return {
             'signals': signals,

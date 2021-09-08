@@ -3,7 +3,7 @@ import logging
 from threading import Lock
 from threading import Thread
 
-from app.controllers.ai import AI
+from app.controllers.bitflyer.ai import AI
 from app.models.candle import create_candle_with_duration
 from app.models.candle import create_initial_candle_with_duration
 from bitflyer.bitflyer import Ticker
@@ -27,7 +27,8 @@ class StreamData(object):
             use_percent=settings.use_percent,
             duration=settings.trade_duration,
             past_period=settings.past_period,
-            stop_limit_percent=settings.stop_limit_percent,
+            stop_limit_percent_sell=settings.stop_limit_percent_sell,
+            stop_limit_target_preiod=settings.stop_limit_target_preiod,
             environment=settings.environment)
         self.trade_lock = Lock()
             
@@ -44,6 +45,8 @@ class StreamData(object):
 
     def trade(self, ticker: Ticker, ai: AI):
         for duration in constants.DURATIONS:
+            if not (duration == settings.trade_duration):
+                continue
             is_created = create_candle_with_duration(ticker.product_code, duration, ticker)
             if is_created and duration == settings.trade_duration:
                 thread = Thread(target=self._trade, args=(ai,))
