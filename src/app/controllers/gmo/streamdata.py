@@ -25,6 +25,7 @@ class StreamData(object):
             past_period=settings.past_period,
             stop_limit_percent_sell=settings.stop_limit_percent_sell,
             stop_limit_percent_buy=settings.stop_limit_percent_buy,
+            stop_limit_target_preiod=settings.stop_limit_target_preiod,
             environment=settings.environment,
             fx_leverage=settings.fx_leverage,
             fx_actual_leverage=settings.fx_actual_leverage)

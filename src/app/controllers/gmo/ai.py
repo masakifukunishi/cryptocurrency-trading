@@ -40,7 +40,7 @@ def duration_seconds(duration: str) -> int:
 
 class AI(object):
 
-    def __init__(self, product_code, use_percent, duration, past_period, stop_limit_percent_sell, stop_limit_percent_buy, environment, fx_leverage, fx_actual_leverage):
+    def __init__(self, product_code, use_percent, duration, past_period, stop_limit_percent_sell, stop_limit_percent_buy, stop_limit_target_preiod, environment, fx_leverage, fx_actual_leverage):
         self.API = APIClient(settings.gmo_api_key, settings.gmo_api_secret)
         self.API.set_initial_candles()
 
@@ -54,6 +54,7 @@ class AI(object):
         self.stop_limit_sell = 0
         self.stop_limit_percent_sell = stop_limit_percent_sell
         self.stop_limit_percent_buy = stop_limit_percent_buy
+        self.stop_limit_target_preiod = stop_limit_target_preiod
         self.environment = environment
         self.fx_leverage = fx_leverage
         self.fx_actual_leverage = fx_actual_leverage
@@ -280,7 +281,13 @@ class AI(object):
 
                 last_event = self.signal_events.signals[-1]
                 if last_event.settle_type == constants.OPEN:
-                    self.stop_limit_sell = df.candles[i].close * self.stop_limit_percent_sell
+                    period_from = max(0, i - self.stop_limit_target_preiod)
+                    period_to = i + 1
+                    stop_limit_target_candles = df.candles[period_from:period_to]
+                    self.stop_limit_sell = min(stop_limit_target_candles, key=lambda x:x.low).low
+                    
+                    # self.stop_limit_sell = df.candles[i].close * self.stop_limit_percent_sell
+
                 if last_event.settle_type == constants.CLOSE:
                     self.stop_limit_buy = 999999999
                     self.update_optimize_params(is_continue=True)
@@ -295,7 +302,12 @@ class AI(object):
 
                 last_event = self.signal_events.signals[-1]
                 if last_event.settle_type == constants.OPEN:
-                    self.stop_limit_buy = df.candles[i].close * self.stop_limit_percent_buy
+                    period_from = max(0, i - self.stop_limit_target_preiod)
+                    period_to = i + 1
+                    stop_limit_target_candles = df.candles[period_from:period_to]
+                    self.stop_limit_buy = max(stop_limit_target_candles, key=lambda x:x.high).high
+
+                    # self.stop_limit_buy = df.candles[i].close * self.stop_limit_percent_buy
                 if last_event.settle_type == constants.CLOSE:
                     self.stop_limit_sell = 0.0
                     self.update_optimize_params(is_continue=True)

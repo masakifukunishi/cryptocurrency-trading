@@ -40,7 +40,7 @@ def duration_seconds(duration: str) -> int:
 
 class AI(object):
 
-    def __init__(self, product_code, use_percent, duration, past_period, stop_limit_percent_sell, environment):
+    def __init__(self, product_code, use_percent, duration, past_period, stop_limit_percent_sell, stop_limit_target_preiod, environment):
         self.API = APIClient(settings.bitflyer_api_key, settings.bitflyer_api_secret)
 
         if environment == constants.ENVIRONMENT_DEV:
@@ -56,6 +56,7 @@ class AI(object):
         self.optimized_trade_params = None
         self.stop_limit = 0
         self.stop_limit_percent_sell = stop_limit_percent_sell
+        self.stop_limit_target_preiod = stop_limit_target_preiod
         self.environment = environment
         self.start_trade = None
         self.candle_cls = factory_candle_class(self.product_code, self.duration)
@@ -249,8 +250,12 @@ class AI(object):
 
                 logger.info(trade_log.rstrip('\n'))
                 logger.info(f'action=buy buy_point={buy_point} environment={self.environment} status=completion')
+                    period_from = max(0, i - self.stop_limit_target_preiod)
+                    period_to = i + 1
+                    stop_limit_target_candles = df.candles[period_from:period_to]
+                    self.stop_limit = min(stop_limit_target_candles, key=lambda x:x.low).low
 
-                self.stop_limit = df.candles[i].close * self.stop_limit_percent_sell
+                # self.stop_limit = df.candles[i].close * self.stop_limit_percent_sell
 
             if sell_point > 0 or self.stop_limit > df.candles[i].close:
                 indicator = trade_log.rstrip('\n')
