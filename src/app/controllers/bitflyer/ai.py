@@ -250,10 +250,10 @@ class AI(object):
 
                 logger.info(trade_log.rstrip('\n'))
                 logger.info(f'action=buy buy_point={buy_point} environment={self.environment} status=completion')
-                    period_from = max(0, i - self.stop_limit_target_preiod)
-                    period_to = i + 1
-                    stop_limit_target_candles = df.candles[period_from:period_to]
-                    self.stop_limit = min(stop_limit_target_candles, key=lambda x:x.low).low
+                period_from = max(0, i - self.stop_limit_target_preiod)
+                period_to = i + 1
+                stop_limit_target_candles = df.candles[period_from:period_to]
+                self.stop_limit = min(stop_limit_target_candles, key=lambda x:x.low).low
 
                 # self.stop_limit = df.candles[i].close * self.stop_limit_percent_sell
 
