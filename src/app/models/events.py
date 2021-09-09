@@ -20,7 +20,8 @@ logger = logging.getLogger(__name__)
 class SignalEvent(Base):
     __tablename__ = 'signal_event'
 
-    time = Column(DateTime, primary_key=True, nullable=False)
+    event_id = Column(Integer, primary_key=True, autoincrement=True, nullable=False)
+    time = Column(DateTime, nullable=False)
     product_code = Column(String)
     side = Column(String)
     price = Column(Float)
