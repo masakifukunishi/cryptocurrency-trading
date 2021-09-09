@@ -78,6 +78,19 @@ class AI(object):
             time.sleep(10 * duration_seconds(self.duration))
             self.update_optimize_params(is_continue)
 
+    def update_optimize_params_after_close(self):
+        logger.info(f'action=update_optimize_params_after_close status=run ')
+        df = DataFrameCandle(self.product_code, self.duration)
+        df.set_all_candles(self.past_period)
+        if df.candles:
+            self.optimized_trade_params = df.optimize_params()
+        if self.optimized_trade_params is not None:
+            logger.info(f'action=update_optimize_params_after_close params={self.optimized_trade_params.__dict__}')
+            self.trade()
+
+        logger.info(f'action=update_optimize_params_after_close status=end')
+
+
     def buy(self, candle, indicator):
         next_order_settle_type = self.signal_events.get_next_order_settle_type()
         if not self.signal_events.can_buy_fx(candle.time):
@@ -199,9 +212,9 @@ class AI(object):
                 self.update_optimize_params(is_continue=False)
             return
 
-        if params.ema_enable:
-            ema_values_1 = talib.EMA(np.array(df.closes), params.ema_period_1)
-            ema_values_2 = talib.EMA(np.array(df.closes), params.ema_period_2)
+        # if params.ema_enable:
+        #     ema_values_1 = talib.EMA(np.array(df.closes), params.ema_period_1)
+        #     ema_values_2 = talib.EMA(np.array(df.closes), params.ema_period_2)
 
         if params.bb_enable:
             bb_up, _, bb_down = talib.BBANDS(np.array(df.closes), params.bb_n, params.bb_k, params.bb_k, 0)
@@ -218,14 +231,14 @@ class AI(object):
         for i in range(1, len(df.candles)):
             buy_point, sell_point = 0, 0
             trade_log, indicator = '', ''
-            if params.ema_enable and params.ema_period_1 <= i and params.ema_period_2 <= i:
-                if ema_values_1[i - 1] < ema_values_2[i - 1] and ema_values_1[i] >= ema_values_2[i]:
-                    buy_point += 1
-                    trade_log += f'action=trade side=buy indicator=ema period_1={params.ema_period_1} period_2={params.ema_period_2}\n'
+            # if params.ema_enable and params.ema_period_1 <= i and params.ema_period_2 <= i:
+            #     if ema_values_1[i - 1] < ema_values_2[i - 1] and ema_values_1[i] >= ema_values_2[i]:
+            #         buy_point += 1
+            #         trade_log += f'action=trade side=buy indicator=ema period_1={params.ema_period_1} period_2={params.ema_period_2}\n'
 
-                if ema_values_1[i - 1] > ema_values_2[i - 1] and ema_values_1[i] <= ema_values_2[i]:
-                    sell_point += 1
-                    trade_log += f'action=trade side=sell indicator=ema period_1={params.ema_period_1} period_2={params.ema_period_2}\n'
+            #     if ema_values_1[i - 1] > ema_values_2[i - 1] and ema_values_1[i] <= ema_values_2[i]:
+            #         sell_point += 1
+            #         trade_log += f'action=trade side=sell indicator=ema period_1={params.ema_period_1} period_2={params.ema_period_2}\n'
 
             if params.bb_enable and params.bb_n <= i:
                 if bb_down[i - 1] > df.candles[i - 1].close and bb_down[i] <= df.candles[i].close:
@@ -290,7 +303,7 @@ class AI(object):
 
                 if last_event.settle_type == constants.CLOSE:
                     self.stop_limit_buy = 999999999
-                    self.update_optimize_params(is_continue=True)
+                    self.update_optimize_params_after_close()
 
             if sell_point > 0 or self.stop_limit_sell > df.candles[i].close:
                 indicator = trade_log.rstrip('\n')
@@ -310,5 +323,5 @@ class AI(object):
                     # self.stop_limit_buy = df.candles[i].close * self.stop_limit_percent_buy
                 if last_event.settle_type == constants.CLOSE:
                     self.stop_limit_sell = 0.0
-                    self.update_optimize_params(is_continue=True)
+                    self.update_optimize_params_after_close()
                 

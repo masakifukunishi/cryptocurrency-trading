@@ -412,19 +412,20 @@ class DataFrameCandle(object):
     
     def optimize_params(self):
         logger.info(f'class=DataFrameCandle action=optimize_params status=run')
-        ema_performance, ema_period_1, ema_period_2 = self.optimize_ema()
+        # ema_performance, ema_period_1, ema_period_2 = self.optimize_ema()
         bb_performance, bb_n, bb_k = self.optimize_bb()
         ichimoku_performance = self.optimize_ichimoku()
         rsi_performance, rsi_period, rsi_buy_thread, rsi_sell_thread = self.optimize_rsi()
         macd_performance, macd_fast_period, macd_slow_period, macd_signal_period = self.optimize_macd()
 
-        ema_ranking = Dict2Obj({'performance': ema_performance, 'enable': False})
+        # ema_ranking = Dict2Obj({'performance': ema_performance, 'enable': False})
         bb_ranking = Dict2Obj({'performance': bb_performance, 'enable': False})
         ichimoku_ranking = Dict2Obj({'performance': ichimoku_performance, 'enable': False})
         rsi_ranking = Dict2Obj({'performance': rsi_performance, 'enable': False})
         macd_ranking = Dict2Obj({'performance': macd_performance, 'enable': False})
 
-        rankings = [ema_ranking, bb_ranking, ichimoku_ranking, rsi_ranking, macd_ranking]
+        # rankings = [ema_ranking, bb_ranking, ichimoku_ranking, rsi_ranking, macd_ranking]
+        rankings = [bb_ranking, ichimoku_ranking, rsi_ranking, macd_ranking]
         rankings = sorted(rankings, key=lambda o: o.performance, reverse=True)
 
         is_enable = False
@@ -441,9 +442,9 @@ class DataFrameCandle(object):
             return None
 
         return Dict2Obj({
-            'ema_enable': ema_ranking.enable,
-            'ema_period_1': ema_period_1,
-            'ema_period_2': ema_period_2,
+            # 'ema_enable': ema_ranking.enable,
+            # 'ema_period_1': ema_period_1,
+            # 'ema_period_2': ema_period_2,
             'bb_enable': bb_ranking.enable,
             'bb_n': bb_n,
             'bb_k': bb_k,

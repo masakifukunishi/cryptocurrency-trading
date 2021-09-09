@@ -482,7 +482,6 @@
             dataTable.addColumn("number", "SenkouB");
             dataTable.addColumn("number", "Chikou");
           }
-          console.log(data["events"]);
           if (data["events"] != undefined) {
             config.dataTable.index += 1;
             config.events.indexes[0] = config.dataTable.index;
@@ -627,7 +626,6 @@
             }
 
             if (data["events"] != undefined) {
-              console.log(data["events"]);
               var event = config.events.first;
               if (event == undefined) {
                 datas.push(null);
@@ -636,6 +634,13 @@
                 datas.push(candle.high);
                 datas.push(event.side);
                 config.events.first = config.events.values.shift();
+
+                if (
+                  config.events.first != undefined &&
+                  config.events.first.time == candle.time
+                ) {
+                  config.events.first = config.events.values.shift();
+                }
               } else {
                 datas.push(null);
                 datas.push(null);
