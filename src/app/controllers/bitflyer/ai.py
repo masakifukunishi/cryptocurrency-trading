@@ -163,14 +163,12 @@ class AI(object):
 #         if params is None:
 #             logger.info(f'action=trade optimized_trade_params=None')
 #             return
-        
         if params is None:
             logger.info(f'action=trade optimized_trade_params=None candles={len(df.candles)}')
             if len(df.candles) >= settings.minimum_period:
                 self.start_trade = datetime.datetime.utcnow()
                 self.update_optimize_params(is_continue=False)
             return
-
         # if params.ema_enable:
         #     ema_values_1 = talib.EMA(np.array(df.closes), params.ema_period_1)
         #     ema_values_2 = talib.EMA(np.array(df.closes), params.ema_period_2)

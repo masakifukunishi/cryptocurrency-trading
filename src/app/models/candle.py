@@ -18,7 +18,8 @@ import settings.settings as settings
 logger = logging.getLogger(__name__)
         
 class BaseCandleMixin(object):
-    time = Column(DateTime, primary_key=True, nullable=False)
+    candle_id = Column(Integer, primary_key=True, autoincrement=True, nullable=False)
+    time = Column(DateTime, nullable=False)
     open = Column(Float)
     close = Column(Float)
     high = Column(Float)

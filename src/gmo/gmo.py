@@ -361,7 +361,6 @@ class APIClient(object):
         if not resp:
             return resp
 
-        print(resp)
         order = Order(
             product_code=resp['symbol'],
             side=resp['side'],
@@ -390,7 +389,6 @@ class APIClient(object):
     #     if not resp:
     #         return resp
 
-    #     print(resp.json()['data'])
     #     resp = resp.json()['data']['list'][0]
     #     position = Position(
     #         product_code=resp['symbol'],

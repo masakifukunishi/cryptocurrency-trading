@@ -8,7 +8,6 @@ from app.models.candle import create_candle_with_duration
 from app.models.candle import create_initial_candle_with_duration
 from bitflyer.bitflyer import Ticker
 from bitflyer.bitflyer import RealtimeAPI
-from cryptowatch.cryptowatch import Candle
 
 import settings.constants as constants
 import settings.settings as settings

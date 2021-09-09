@@ -211,7 +211,6 @@ class AI(object):
                 self.start_trade = datetime.datetime.utcnow()
                 self.update_optimize_params(is_continue=False)
             return
-
         # if params.ema_enable:
         #     ema_values_1 = talib.EMA(np.array(df.closes), params.ema_period_1)
         #     ema_values_2 = talib.EMA(np.array(df.closes), params.ema_period_2)
@@ -303,7 +302,7 @@ class AI(object):
 
                 if last_event.settle_type == constants.CLOSE:
                     self.stop_limit_buy = 999999999
-                    self.update_optimize_params_after_close()
+                    self.update_optimize_params(is_continue=False)
 
             if sell_point > 0 or self.stop_limit_sell > df.candles[i].close:
                 indicator = trade_log.rstrip('\n')
@@ -323,5 +322,5 @@ class AI(object):
                     # self.stop_limit_buy = df.candles[i].close * self.stop_limit_percent_buy
                 if last_event.settle_type == constants.CLOSE:
                     self.stop_limit_sell = 0.0
-                    self.update_optimize_params_after_close()
+                    self.update_optimize_params(is_continue=False)
                 
