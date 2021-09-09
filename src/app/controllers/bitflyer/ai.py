@@ -58,7 +58,7 @@ class AI(object):
         self.stop_limit_percent_sell = stop_limit_percent_sell
         self.stop_limit_target_preiod = stop_limit_target_preiod
         self.environment = environment
-        self.start_trade = None
+        self.start_trade = datetime.datetime.utcnow()
         self.candle_cls = factory_candle_class(self.product_code, self.duration)
         self.update_optimize_params(False)
         self.decimal_point = 3
