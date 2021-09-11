@@ -21,14 +21,7 @@ api = APIClient(settings.bitflyer_api_key, settings.bitflyer_api_secret)
 class StreamData(object):
 
     def __init__(self):
-        self.ai = AI(
-            product_code=settings.product_code,
-            use_percent=settings.use_percent,
-            duration=settings.trade_duration,
-            past_period=settings.past_period,
-            stop_limit_percent_sell=settings.stop_limit_percent_sell,
-            stop_limit_target_preiod=settings.stop_limit_target_preiod,
-            environment=settings.environment)
+        self.ai = AI()
         self.trade_lock = Lock()
             
 #     def stream_ingestion_data(self):

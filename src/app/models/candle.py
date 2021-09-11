@@ -69,6 +69,7 @@ class BaseCandleMixin(object):
 
     @classmethod
     def get_all_candles(cls, limit=100):
+        print(limit)
         with session_scope() as session:
             candles = session.query(cls).order_by(
                 desc(cls.time)).limit(limit).all()

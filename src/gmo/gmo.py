@@ -159,7 +159,7 @@ class APIClient(object):
                 duration = self.trade_duration.replace('h', 'hour')
 
             # get data for the last 10 days
-            for num in range(10):
+            for num in range(45):
                 target_date = (now - timedelta(days=num)).strftime("%Y%m%d")
                 path = settings.gmo_kline_path.format(currency=self.product_code,
                                                     duration=duration, 

@@ -40,24 +40,20 @@ def duration_seconds(duration: str) -> int:
 
 class AI(object):
 
-    def __init__(self, product_code, use_percent, duration, past_period, stop_limit_percent_sell, stop_limit_target_preiod, environment):
+    def __init__(self):
         self.API = APIClient(settings.bitflyer_api_key, settings.bitflyer_api_secret)
-
-        if environment == constants.ENVIRONMENT_DEV:
-            # self.signal_events = SignalEvents()
-            self.signal_events = SignalEvents.get_signal_events_by_count(1)
-        elif environment == constants.ENVIRONMENT_STAGING or environment == constants.ENVIRONMENT_PRODUCTION:
-            self.signal_events = SignalEvents.get_signal_events_by_count(1)
-
-        self.product_code = product_code
-        self.use_percent = use_percent
-        self.duration = duration
-        self.past_period = past_period
+        # self.signal_events = SignalEvents()
+        self.signal_events = SignalEvents.get_signal_events_by_count(1)
+        self.product_code = settings.product_code
+        self.use_percent = settings.use_percent
+        self.duration = settings.trade_duration
+        self.target_period = settings.target_period
+        self.back_test_target_period = settings.back_test_target_period
         self.optimized_trade_params = None
         self.stop_limit = 0
-        self.stop_limit_percent_sell = stop_limit_percent_sell
-        self.stop_limit_target_preiod = stop_limit_target_preiod
-        self.environment = environment
+        self.stop_limit_percent_sell = settings.stop_limit_percent_sell
+        self.stop_limit_target_preiod = settings.stop_limit_target_preiod
+        self.environment = settings.environment
         self.start_trade = datetime.datetime.utcnow()
         self.candle_cls = factory_candle_class(self.product_code, self.duration)
         self.update_optimize_params(False)
@@ -67,9 +63,9 @@ class AI(object):
         logger.info(f'action=update_optimize_params status=run is_continue={is_continue}')
         df = DataFrameCandle(self.product_code, self.duration)
         if self.environment == constants.ENVIRONMENT_DEV:
-            df.set_all_candles_dev_back_test(limit=self.past_period, signals=self.signal_events.signals)
+            df.set_all_candles_dev_back_test(limit=self.target_period, signals=self.signal_events.signals)
         else:
-            df.set_all_candles(limit=self.past_period)
+            df.set_all_candles(limit=self.target_period)
             
         if df.candles:
             self.optimized_trade_params = df.optimize_params()
@@ -161,7 +157,12 @@ class AI(object):
     def trade(self):
         logger.info('action=trade status=run')
         df = DataFrameCandle(self.product_code, self.duration)
-        df.set_all_candles(self.past_period)
+
+        if self.environment == constants.ENVIRONMENT_DEV:
+            df.set_all_candles(self.back_test_target_period)
+        else:
+            df.set_all_candles(self.target_period)
+
         params = self.optimized_trade_params
 
 #         if params is None:

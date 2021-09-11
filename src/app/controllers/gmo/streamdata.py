@@ -18,17 +18,7 @@ logger = logging.getLogger(__name__)
 class StreamData(object):
 
     def __init__(self):
-        self.ai = AI(
-            product_code=settings.product_code,
-            use_percent=settings.use_percent,
-            duration=settings.trade_duration,
-            past_period=settings.past_period,
-            stop_limit_percent_sell=settings.stop_limit_percent_sell,
-            stop_limit_percent_buy=settings.stop_limit_percent_buy,
-            stop_limit_target_preiod=settings.stop_limit_target_preiod,
-            environment=settings.environment,
-            fx_leverage=settings.fx_leverage,
-            fx_actual_leverage=settings.fx_actual_leverage)
+        self.ai = AI()
         self.trade_lock = Lock()
 
     def stream_ingestion_data(self):

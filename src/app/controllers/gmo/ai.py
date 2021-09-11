@@ -42,24 +42,25 @@ def duration_seconds(duration: str) -> int:
 
 class AI(object):
 
-    def __init__(self, product_code, use_percent, duration, past_period, stop_limit_percent_sell, stop_limit_percent_buy, stop_limit_target_preiod, environment, fx_leverage, fx_actual_leverage):
+    def __init__(self):
         self.API = APIClient(settings.gmo_api_key, settings.gmo_api_secret)
         self.API.set_initial_candles()
 
         self.signal_events = SignalEvents.get_signal_events_by_count(1)
-        self.product_code = product_code
-        self.use_percent = use_percent
-        self.duration = duration
-        self.past_period = past_period
+        self.product_code = settings.product_code
+        self.use_percent = settings.use_percent
+        self.duration = settings.trade_duration
+        self.target_period = settings.target_period
+        self.back_test_target_period = settings.back_test_target_period
         self.optimized_trade_params = None
         self.stop_limit_buy = 999999999
         self.stop_limit_sell = 0
-        self.stop_limit_percent_sell = stop_limit_percent_sell
-        self.stop_limit_percent_buy = stop_limit_percent_buy
-        self.stop_limit_target_preiod = stop_limit_target_preiod
-        self.environment = environment
-        self.fx_leverage = fx_leverage
-        self.fx_actual_leverage = fx_actual_leverage
+        self.stop_limit_percent_sell = settings.stop_limit_percent_sell
+        self.stop_limit_percent_buy = settings.stop_limit_percent_buy
+        self.stop_limit_target_preiod = settings.stop_limit_target_preiod
+        self.environment = settings.environment
+        self.fx_leverage = settings.fx_leverage
+        self.fx_actual_leverage = settings.fx_actual_leverage
         self.start_trade = datetime.datetime.utcnow()
         self.candle_cls = factory_candle_class(self.product_code, self.duration)
         self.update_optimize_params(False)
@@ -69,9 +70,9 @@ class AI(object):
         logger.info(f'action=update_optimize_params status=run is_continue={is_continue}')
         df = DataFrameCandle(self.product_code, self.duration)
         if self.environment == constants.ENVIRONMENT_DEV:
-            df.set_all_candles_dev_back_test(limit=self.past_period, signals=self.signal_events.signals)
+            df.set_all_candles_dev_back_test(limit=self.target_period, signals=self.signal_events.signals)
         else:
-            df.set_all_candles(limit=self.past_period)
+            df.set_all_candles(limit=self.target_period)
 
         if df.candles:
             self.optimized_trade_params = df.optimize_params()
@@ -195,7 +196,11 @@ class AI(object):
     def trade(self):
         logger.info('action=trade status=run')
         df = DataFrameCandle(self.product_code, self.duration)
-        df.set_all_candles(self.past_period)
+        if self.environment == constants.ENVIRONMENT_DEV:
+            df.set_all_candles(self.back_test_target_period)
+        else:
+            df.set_all_candles(self.target_period)
+            
         params = self.optimized_trade_params
         
         if params is None:
