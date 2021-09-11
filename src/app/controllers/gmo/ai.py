@@ -7,7 +7,7 @@ import numpy as np
 import talib
 
 from app.models.candle import factory_candle_class
-from app.models.dfcandle import DataFrameCandle
+from app.models.gmo.dfcandle import DataFrameCandle
 from app.models.events import SignalEvents
 from gmo.gmo import APIClient
 from gmo.gmo import Order

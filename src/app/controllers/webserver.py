@@ -5,7 +5,6 @@ from flask import request
 import sys
 sys.path.append('/src')
 
-from app.models.dfcandle import DataFrameCandle
 
 import settings.constants as constants
 import settings.settings as settings
@@ -41,7 +40,15 @@ def api_make_handler():
     if not duration:
         duration = constants.DURATION_1M
     duration_time = constants.TRADE_MAP[duration]['duration']
-    df = DataFrameCandle(product_code, duration_time)
+
+    if settings.exchange == constants.EXCHANGE_BITFLYER:
+        from app.models.bitflyer.dfcandle import DataFrameCandle
+        df = DataFrameCandle(product_code, duration_time)
+
+    elif settings.exchange == constants.EXCHANGE_GMO:
+        from app.models.gmo.dfcandle import DataFrameCandle
+        df = DataFrameCandle(product_code, duration_time)
+
     df.set_all_candles(limit)
 
     sma = request.args.get('sma')

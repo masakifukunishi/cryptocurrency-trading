@@ -52,6 +52,9 @@ SELL = 'SELL'
 OPEN = 'OPEN'
 CLOSE = 'CLOSE'
 
+EXCHANGE_BITFLYER = 'bitflyer'
+EXCHANGE_GMO = 'gmo'
+
 TRADE_TYPE_BUY = 'buy'
 TRADE_TYPE_SELL = 'sell'
 TRADE_TYPE_FX = 'fx'

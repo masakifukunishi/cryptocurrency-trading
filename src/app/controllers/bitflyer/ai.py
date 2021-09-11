@@ -7,7 +7,7 @@ import numpy as np
 import talib
 
 from app.models.candle import factory_candle_class
-from app.models.dfcandle import DataFrameCandle
+from app.models.bitflyer.dfcandle import DataFrameCandle
 from app.models.events import SignalEvents
 from bitflyer.bitflyer import APIClient
 from bitflyer.bitflyer import Order

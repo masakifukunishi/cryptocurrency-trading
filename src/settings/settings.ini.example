@@ -40,6 +40,7 @@ name = cryptocurrency_data.sql
 driver = sqlite3
 
 [trading]
+exchange = gmo
 trade_type = fx
 environment = production
 trade_duration = 5m
