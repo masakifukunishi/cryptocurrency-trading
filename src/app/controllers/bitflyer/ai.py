@@ -66,7 +66,11 @@ class AI(object):
     def update_optimize_params(self, is_continue: bool):
         logger.info(f'action=update_optimize_params status=run is_continue={is_continue}')
         df = DataFrameCandle(self.product_code, self.duration)
-        df.set_all_candles(self.past_period)
+        if self.environment == constants.ENVIRONMENT_DEV:
+            df.set_all_candles_dev_back_test(limit=self.past_period, signals=self.signal_events.signals)
+        else:
+            df.set_all_candles(limit=self.past_period)
+            
         if df.candles:
             self.optimized_trade_params = df.optimize_params()
         if self.optimized_trade_params is not None:

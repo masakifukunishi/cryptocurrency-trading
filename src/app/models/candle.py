@@ -79,6 +79,30 @@ class BaseCandleMixin(object):
         candles.reverse()
         return candles
 
+    @classmethod
+    def get_all_candles_before_last_event(cls, limit, signals):
+        if signals:
+            last_event = signals[-1]
+            with session_scope() as session:
+                candles = session.query(cls).filter(
+                    cls.time <= last_event.time).order_by(
+                    desc(cls.time)).limit(limit).all()
+
+            if candles is None:
+                return None
+
+            candles.reverse()
+            return candles
+
+        else:
+            with session_scope() as session:
+                candles = session.query(cls).order_by(
+                    cls.time).limit(limit).all()
+
+            if candles is None:
+                return None
+            return candles
+
     @property
     def value(self):
         return {
@@ -102,6 +126,9 @@ class BaseCandle3M(BaseCandleMixin, Base):
 class BaseCandle5M(BaseCandleMixin, Base):
     __tablename__ = 'CANDLES_5M'
 
+class BaseCandle10M(BaseCandleMixin, Base):
+    __tablename__ = 'CANDLES_10M'
+
 class BaseCandle15M(BaseCandleMixin, Base):
     __tablename__ = 'CANDLES_15M'
 
@@ -121,6 +148,8 @@ def factory_candle_class(product_code, duration):
         return BaseCandle3M
     if duration == constants.DURATION_5M:
         return BaseCandle5M
+    if duration == constants.DURATION_10M:
+        return BaseCandle10M
     if duration == constants.DURATION_15M:
         return BaseCandle15M
     if duration == constants.DURATION_30M:

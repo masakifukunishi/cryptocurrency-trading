@@ -63,6 +63,13 @@ class Ticker(object):
                 self.time.hour, five_minute)
             time_format = '%Y-%m-%d %H:%M'
 
+        elif duration == constants.DURATION_10M:
+            ten_minute = math.floor(self.time.minute / 10) * 10
+            ticker_time = datetime(
+                self.time.year, self.time.month, self.time.day,
+                self.time.hour, ten_minute)
+            time_format = '%Y-%m-%d %H:%M'
+
         elif duration == constants.DURATION_15M:
             fifteen_minute = math.floor(self.time.minute / 15) * 15
             ticker_time = datetime(
@@ -134,8 +141,8 @@ class APIClient(object):
         for duration in constants.DURATIONS:
             if not (duration == settings.trade_duration):
                 continue
-            duration_time = constants.TRADE_MAP[duration]['granularity']
-            if duration_time in constants.CRYPTOWATCH_ENABLE_PERIOD:
+            duration_time = constants.TRADE_MAP[duration]['duration']
+            if duration_time in constants.GMO_ENABLE_PERIOD:
                 candles = self.get_initial_candles()
                 create_initial_candle_with_duration(self.product_code, duration, candles)
         logger.info('action=set_initial_candles status=end')

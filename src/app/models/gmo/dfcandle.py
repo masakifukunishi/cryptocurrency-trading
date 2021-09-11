@@ -86,8 +86,12 @@ class DataFrameCandle(object):
         self.macd = Macd(0, 0, 0, [], [], [])
         self.events = SignalEvents()
 
-    def set_all_candles(self, limit=1000, candle_id=None):
+    def set_all_candles(self, limit):
         self.candles = self.candle_cls.get_all_candles(limit)
+        return self.candles
+
+    def set_all_candles_dev_back_test(self, limit, signals):
+        self.candles = self.candle_cls.get_all_candles_before_last_event(limit, signals)
         return self.candles
 
     @property

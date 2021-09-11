@@ -28,6 +28,8 @@ def duration_seconds(duration: str) -> int:
         return 60 * 3
     if duration == constants.DURATION_5M:
         return 60 * 5
+    if duration == constants.DURATION_10M:
+        return 60 * 10
     if duration == constants.DURATION_15M:
         return 60 * 15
     if duration == constants.DURATION_30M:
@@ -66,7 +68,11 @@ class AI(object):
     def update_optimize_params(self, is_continue: bool):
         logger.info(f'action=update_optimize_params status=run is_continue={is_continue}')
         df = DataFrameCandle(self.product_code, self.duration)
-        df.set_all_candles(self.past_period)
+        if self.environment == constants.ENVIRONMENT_DEV:
+            df.set_all_candles_dev_back_test(limit=self.past_period, signals=self.signal_events.signals)
+        else:
+            df.set_all_candles(limit=self.past_period)
+
         if df.candles:
             self.optimized_trade_params = df.optimize_params()
         if self.optimized_trade_params is not None:
@@ -77,19 +83,6 @@ class AI(object):
         if is_continue and self.optimized_trade_params is None:
             time.sleep(10 * duration_seconds(self.duration))
             self.update_optimize_params(is_continue)
-
-    def update_optimize_params_after_close(self):
-        logger.info(f'action=update_optimize_params_after_close status=run ')
-        df = DataFrameCandle(self.product_code, self.duration)
-        df.set_all_candles(self.past_period)
-        if df.candles:
-            self.optimized_trade_params = df.optimize_params()
-        if self.optimized_trade_params is not None:
-            logger.info(f'action=update_optimize_params_after_close params={self.optimized_trade_params.__dict__}')
-            self.trade()
-
-        logger.info(f'action=update_optimize_params_after_close status=end')
-
 
     def buy(self, candle, indicator):
         next_order_settle_type = self.signal_events.get_next_order_settle_type()

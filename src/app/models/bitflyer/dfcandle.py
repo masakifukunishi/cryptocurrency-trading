@@ -90,6 +90,10 @@ class DataFrameCandle(object):
         self.candles = self.candle_cls.get_all_candles(limit)
         return self.candles
 
+    def set_all_candles_dev_back_test(self, limit, signals):
+        self.candles = self.candle_cls.get_all_candles_before_last_event(limit, signals)
+        return self.candles
+        
     @property
     def value(self):
         return {
