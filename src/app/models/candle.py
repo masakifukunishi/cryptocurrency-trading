@@ -68,6 +68,17 @@ class BaseCandleMixin(object):
             session.add(self)
 
     @classmethod
+    def get_latest_candle(cls):
+        with session_scope() as session:
+            candles = session.query(cls).order_by(
+                desc(cls.time)).limit(1).first()
+
+        if candles is None:
+            return None
+
+        return candles
+
+    @classmethod
     def get_all_candles(cls, limit=100):
         with session_scope() as session:
             candles = session.query(cls).order_by(

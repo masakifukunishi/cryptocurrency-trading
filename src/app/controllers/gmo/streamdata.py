@@ -32,12 +32,12 @@ class StreamData(object):
             if not (duration == settings.trade_duration):
                 continue
             is_created = create_candle_with_duration(ticker.product_code, duration, ticker)
-            if is_created and duration == settings.trade_duration:
-                thread = Thread(target=self._trade, args=(ai,))
+            if duration == settings.trade_duration:
+                thread = Thread(target=self._trade, args=(ai,is_created))
                 thread.start()
 
-    def _trade(self, ai: AI):
+    def _trade(self, ai: AI, is_created):
         with self.trade_lock:
-            ai.trade()
-# singleton
+            ai.trade(is_created)
+            
 stream = StreamData()

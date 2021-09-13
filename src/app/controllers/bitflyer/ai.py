@@ -117,8 +117,8 @@ class AI(object):
             could_buy = self.signal_events.buy(self.product_code, candle.time, resp.price, resp.size, indicator, save=True)
             return could_buy
 
-    def sell(self, candle, indicator):
-        if not self.signal_events.can_sell(candle.time):
+    def sell(self, candle, indicator, is_loss_cut):
+        if not self.signal_events.can_sell(candle.time, is_loss_cut):
             # logger.info(f'action=sell signal_events={self.signal_events.value}')
             # logger.warning('action=sell status=false error=previous_was_sell')
             return False
@@ -154,7 +154,25 @@ class AI(object):
             could_sell = self.signal_events.sell(self.product_code, candle.time, resp.price, resp.size, indicator, save=True)
             return could_sell
 
-    def trade(self):
+    def loss_cut(self):
+        logger.info('action=loss_cut status=start')
+        if self.environment == constants.ENVIRONMENT_DEV:
+            return
+
+        latest_candle = self.candle_cls.get_latest_candle()
+
+        if self.stop_limit > latest_candle.close:
+            if not self.sell(candle=latest_candle, indicator='loss cut', is_loss_cut=True):
+                logger.info('action=loss_cut status=sell')
+                self.stop_limit = 0.0
+                self.update_optimize_params(is_continue=False)
+        return
+
+    def trade(self, is_created):
+        if not is_created:
+            self.loss_cut()
+            return
+
         logger.info('action=trade status=run')
         df = DataFrameCandle(self.product_code, self.duration)
 
@@ -248,7 +266,7 @@ class AI(object):
 
             if buy_point > 0:
                 indicator = trade_log.rstrip('\n')
-                if not self.buy(df.candles[i], indicator):
+                if not self.buy(candle=df.candles[i], indicator=indicator):
                     continue
 
                 logger.info(trade_log.rstrip('\n'))
@@ -262,7 +280,7 @@ class AI(object):
 
             if sell_point > 0 or self.stop_limit > df.candles[i].close:
                 indicator = trade_log.rstrip('\n')
-                if not self.sell(df.candles[i], indicator):
+                if not self.sell(candle=df.candles[i], indicator=indicator, is_loss_cut=False):
                     continue
 
                 logger.info(trade_log.rstrip('\n'))

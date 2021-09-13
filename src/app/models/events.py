@@ -86,7 +86,10 @@ class SignalEvents(object):
 
         return False
 
-    def can_sell(self, time):
+    def can_sell(self, time, is_loss_cut):
+        if is_loss_cut:
+            True
+            
         if len(self.signals) == 0:
             return False
 
@@ -96,7 +99,10 @@ class SignalEvents(object):
 
         return False
 
-    def can_buy_fx(self, time):
+    def can_buy_fx(self, time, is_loss_cut):
+        if is_loss_cut:
+            True
+
         if len(self.signals) == 0:
             return True
 
@@ -109,7 +115,10 @@ class SignalEvents(object):
 
         return False
 
-    def can_sell_fx(self, time):
+    def can_sell_fx(self, time, is_loss_cut):
+        if is_loss_cut:
+            True
+
         if len(self.signals) == 0:
             return True
 
@@ -143,7 +152,7 @@ class SignalEvents(object):
                 return False
 
         if settings.trade_type == constants.TRADE_TYPE_FX:
-            if not self.can_buy_fx(time):
+            if not self.can_buy_fx(time=time, is_loss_cut=False):
                 return False
 
         signal_event = SignalEvent(time=time, 
@@ -164,11 +173,11 @@ class SignalEvents(object):
     def sell(self, product_code, time, price, size, order_id=None, settle_type=None, indicator=None, save=True):
 
         if settings.trade_type == constants.TRADE_TYPE_BUY:
-            if not self.can_sell(time):
+            if not self.can_sell(time, is_loss_cut=False):
                 return False
 
         if settings.trade_type == constants.TRADE_TYPE_FX:
-            if not self.can_sell_fx(time):
+            if not self.can_sell_fx(time=time, is_loss_cut=False):
                 return False
 
         signal_event = SignalEvent(time=time,

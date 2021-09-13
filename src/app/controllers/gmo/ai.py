@@ -85,9 +85,9 @@ class AI(object):
             time.sleep(10 * duration_seconds(self.duration))
             self.update_optimize_params(is_continue)
 
-    def buy(self, candle, indicator):
+    def buy(self, candle, indicator, is_loss_cut):
         next_order_settle_type = self.signal_events.get_next_order_settle_type()
-        if not self.signal_events.can_buy_fx(candle.time):
+        if not self.signal_events.can_buy_fx(candle.time, is_loss_cut):
             return False
             
         if self.environment == constants.ENVIRONMENT_DEV:
@@ -139,8 +139,8 @@ class AI(object):
                                                save=True)
             return could_buy
 
-    def sell(self, candle, indicator):
-        if not self.signal_events.can_sell_fx(candle.time):
+    def sell(self, candle, indicator, is_loss_cut):
+        if not self.signal_events.can_sell_fx(candle.time, is_loss_cut):
             return False
         next_order_settle_type = self.signal_events.get_next_order_settle_type()
         # dev
@@ -193,7 +193,30 @@ class AI(object):
                                                save=True)
             return could_sell
 
-    def trade(self):
+    def loss_cut(self):
+        if self.environment == constants.ENVIRONMENT_DEV:
+            return
+
+        latest_candle = self.candle_cls.get_latest_candle()
+        if self.stop_limit_buy < latest_candle.close:
+            if not self.buy(candle=latest_candle, indicator='loss cut', is_loss_cut=True):
+                logger.info('action=loss_cut status=buy')
+                self.stop_limit_buy = 999999999
+                self.update_optimize_params(is_continue=False)
+
+        if self.stop_limit_sell > latest_candle.close:
+            if not self.sell(candle=latest_candle, indicator='loss cut', is_loss_cut=True):
+                logger.info('action=loss_cut status=sell')
+                self.stop_limit_sell = 0.0
+                self.update_optimize_params(is_continue=False)
+        return
+
+    def trade(self, is_created):
+
+        if not is_created:
+            self.loss_cut()
+            return
+
         logger.info('action=trade status=run')
         df = DataFrameCandle(self.product_code, self.duration)
         if self.environment == constants.ENVIRONMENT_DEV:
@@ -283,7 +306,7 @@ class AI(object):
 
             if buy_point > 0 or self.stop_limit_buy < df.candles[i].close:
                 indicator = trade_log.rstrip('\n')
-                if not self.buy(df.candles[i], indicator):
+                if not self.buy(candle=df.candles[i], indicator=indicator, is_loss_cut=False):
                     continue
 
                 logger.info(trade_log.rstrip('\n'))
@@ -304,7 +327,7 @@ class AI(object):
 
             if sell_point > 0 or self.stop_limit_sell > df.candles[i].close:
                 indicator = trade_log.rstrip('\n')
-                if not self.sell(df.candles[i], indicator):
+                if not self.sell(candle=df.candles[i], indicator=indicator, is_loss_cut=False):
                     continue
 
                 logger.info(trade_log.rstrip('\n'))
