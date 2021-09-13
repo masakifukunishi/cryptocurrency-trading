@@ -88,7 +88,7 @@ class SignalEvents(object):
 
     def can_sell(self, time, is_loss_cut):
         if is_loss_cut:
-            True
+            return True
             
         if len(self.signals) == 0:
             return False
@@ -101,7 +101,7 @@ class SignalEvents(object):
 
     def can_buy_fx(self, time, is_loss_cut):
         if is_loss_cut:
-            True
+            return True
 
         if len(self.signals) == 0:
             return True
@@ -117,7 +117,7 @@ class SignalEvents(object):
 
     def can_sell_fx(self, time, is_loss_cut):
         if is_loss_cut:
-            True
+            return True
 
         if len(self.signals) == 0:
             return True

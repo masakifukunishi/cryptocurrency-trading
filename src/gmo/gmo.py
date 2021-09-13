@@ -230,6 +230,7 @@ class APIClient(object):
         
         logger.info(f'action=send_order resp={resp.json()}')
 
+        time.sleep(2)
         order_id = resp.json()['data']
         logger.info(f'action=send_order order_id={order_id}')
 
@@ -304,7 +305,8 @@ class APIClient(object):
         except Exception as e:
             logger.error(f'action=send_bulk_close_order error={e}')
             raise
-        time.sleep(1)
+            
+        time.sleep(2)
         order_id = resp.json()['data']
         order = self.get_order(order_id)
         logger.info(f'action=send_bulk_close_order status=end time={datetime.now()}')
