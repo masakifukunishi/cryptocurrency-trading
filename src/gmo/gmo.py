@@ -435,7 +435,6 @@ class APIClient(object):
         ask = ticker.ask
         size = available / ask * self.fx_actual_leverage
         size = math.floor(size * 10 ** decimal_point) / (10 ** decimal_point)
-        size = 0.02
         return size
 
 class RealtimeAPI(object):
