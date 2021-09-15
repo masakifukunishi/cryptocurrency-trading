@@ -78,14 +78,14 @@ class AI(object):
             time.sleep(10 * duration_seconds(self.duration))
             self.update_optimize_params(is_continue)
 
-    def buy(self, candle, indicator):
-        if not self.signal_events.can_buy(candle.time):
+    def buy(self, candle, indicator, is_loss_cut):
+        if not self.signal_events.can_buy(candle.time, is_loss_cut):
             # logger.info(f'action=buy signal_events={self.signal_events.value}')
             # logger.warning('action=buy status=false error=previous_was_buy')
             return False
         # dev
         if self.environment == constants.ENVIRONMENT_DEV:
-            could_buy = self.signal_events.buy(self.product_code, candle.time, candle.close, 0.1, indicator, save=True)
+            could_buy = self.signal_events.buy(self.product_code, candle.time, candle.close, 0.1, indicator, is_loss_cut=False, save=True)
             # logger.info(f'action=buy signal_events={self.signal_events.value}')
             return could_buy
 
@@ -97,7 +97,7 @@ class AI(object):
             
         # staging
         if self.environment == constants.ENVIRONMENT_STAGING:
-            could_buy = self.signal_events.buy(self.product_code, candle.time, candle.close, 0.1, indicator, save=True)
+            could_buy = self.signal_events.buy(self.product_code, candle.time, candle.close, 0.1, indicator, is_loss_cut=False, save=True)
             return could_buy
 
         # production
@@ -108,13 +108,13 @@ class AI(object):
             ask = ticker.ask
             size = available / ask
             size = math.floor(size * 10 ** self.decimal_point) / (10 ** self.decimal_point)
+            size = 0.01
             order = Order(self.product_code, constants.BUY, size)
             resp = self.API.send_order(order)
             if not resp:
                 logger.error(f'action=buy status=error responce={resp}')
                 return False
-            logger.info(f'action=buy responce={resp}')
-            could_buy = self.signal_events.buy(self.product_code, candle.time, resp.price, resp.size, indicator, save=True)
+            could_buy = self.signal_events.buy(self.product_code, candle.time, resp.price, resp.size, indicator, is_loss_cut=is_loss_cut, save=True)
             return could_buy
 
     def sell(self, candle, indicator, is_loss_cut):
@@ -125,7 +125,7 @@ class AI(object):
             
         # dev
         if self.environment == constants.ENVIRONMENT_DEV:
-            could_sell = self.signal_events.sell(self.product_code, candle.time, candle.close, 0.1, indicator, save=True)
+            could_sell = self.signal_events.sell(self.product_code, candle.time, candle.close, 0.1, indicator, is_loss_cut=False, save=True)
             # logger.info(f'action=sell signal_events={self.signal_events.value}')
             return could_sell
 
@@ -137,7 +137,7 @@ class AI(object):
 
         # staging
         if self.environment == constants.ENVIRONMENT_STAGING:
-            could_sell = self.signal_events.sell(self.product_code, candle.time, candle.close, 0.1, indicator, save=True)
+            could_sell = self.signal_events.sell(self.product_code, candle.time, candle.close, 0.1, indicator, is_loss_cut=False, save=True)
             return could_sell
 
         # production
@@ -145,24 +145,23 @@ class AI(object):
             balance = self.API.get_balance(settings.sell_currency)
             available = balance.available - balance.available * settings.bitflyer_commission_percentage
             size = math.floor(available * 10 ** self.decimal_point) / (10 ** self.decimal_point)
+            size = 0.01
             order = Order(self.product_code, constants.SELL, size)
             resp = self.API.send_order(order)
             if not resp:
                 logger.error(f'action=buy status=error responce={resp}')
                 return False
-            logger.info(f'action=sell responce={resp}')
-            could_sell = self.signal_events.sell(self.product_code, candle.time, resp.price, resp.size, indicator, save=True)
+            could_sell = self.signal_events.sell(self.product_code, candle.time, resp.price, resp.size, indicator, is_loss_cut=is_loss_cut, save=True)
             return could_sell
 
     def loss_cut(self):
-        logger.info('action=loss_cut status=start')
         if self.environment == constants.ENVIRONMENT_DEV:
             return
 
         latest_candle = self.candle_cls.get_latest_candle()
 
         if self.stop_limit > latest_candle.close:
-            if not self.sell(candle=latest_candle, indicator='loss cut', is_loss_cut=True):
+            if self.sell(candle=latest_candle, indicator='loss cut', is_loss_cut=True):
                 logger.info('action=loss_cut status=sell')
                 self.stop_limit = 0.0
                 self.update_optimize_params(is_continue=False)
@@ -266,7 +265,7 @@ class AI(object):
 
             if buy_point > 0:
                 indicator = trade_log.rstrip('\n')
-                if not self.buy(candle=df.candles[i], indicator=indicator):
+                if not self.buy(candle=df.candles[i], indicator=indicator, is_loss_cut=False):
                     continue
 
                 logger.info(trade_log.rstrip('\n'))

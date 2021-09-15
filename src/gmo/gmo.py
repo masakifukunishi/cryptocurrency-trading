@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from decimal import Decimal
 import dateutil.parser
 import math
 import time
@@ -230,11 +231,11 @@ class APIClient(object):
         
         logger.info(f'action=send_order resp={resp.json()}')
 
-        time.sleep(2)
+        time.sleep(1)
         order_id = resp.json()['data']
-        logger.info(f'action=send_order order_id={order_id}')
-
         order = self.get_order(order_id)
+        self.wait_order_complete(order.size, order_id)
+        
         logger.info(f'action=send_order status=end time={datetime.now()}')
         if not order:
             logger.error('action=send_order error=timeout')
@@ -305,19 +306,18 @@ class APIClient(object):
         except Exception as e:
             logger.error(f'action=send_bulk_close_order error={e}')
             raise
-            
-        time.sleep(2)
+
+        time.sleep(1)
         order_id = resp.json()['data']
         order = self.get_order(order_id)
+
+        self.wait_order_complete(order.size, order_id)
         logger.info(f'action=send_bulk_close_order status=end time={datetime.now()}')
         if not order:
             logger.error('action=send_bulk_close_order error=timeout')
             raise OrderTimeoutError
         
         return order
-
-    # def wait_order_complete(self, order_id) -> Order:
-    #     self.get_order(order_id)
 
     def get_order(self, order_id) -> Order:
         logger.info(f'action=get_order status=run product_code={self.product_code} order_id={order_id}')
@@ -329,7 +329,6 @@ class APIClient(object):
         headers = self.make_headers(method, path)
         try:
             resp = requests.get(end_point + path, headers=headers, params=parameters)
-            logger.info(f'action=get_order resp={resp.json()}')
             resp = resp.json()['data']['list'][0]
 
         except Exception as e:
@@ -350,7 +349,26 @@ class APIClient(object):
         )
         return order
 
-    def get_executions(self, order_id) -> Order:
+    def wait_order_complete(self, target_size, order_id):
+        logger.info('action=wait_order_complete status=run')
+        count = 0
+        timeout_count = 60
+        while True:
+            executed_size = 0
+            executions = self.get_executions(order_id)
+            for execution in executions:
+                executed_size += Decimal(execution['size'])
+
+            if target_size == float(executed_size):
+                logger.info('action=wait_order_complete status=end')
+                return
+
+            time.sleep(1)
+            count += 1
+            if count > timeout_count:
+                return None
+
+    def get_executions(self, order_id):
         logger.info(f'action=get_executions status=run product_code={self.product_code} order_id={order_id}')
         method = 'GET'
         end_point = self.private_end_point
@@ -360,25 +378,13 @@ class APIClient(object):
         headers = self.make_headers(method, path)
         try:
             resp = requests.get(end_point + path, headers=headers, params=parameters)
-            logger.info(f'action=get_executions resp={resp.json()}')
-            resp = resp.json()['data']['list'][0]
+            resp = resp.json()['data']['list'] if resp.json()['data'] else []
 
         except Exception as e:
             logger.error(f'action=get_executions error={e}')
             raise
 
-        if not resp:
-            return resp
-
-        order = Order(
-            product_code=resp['symbol'],
-            side=resp['side'],
-            size=float(resp['size']),
-            price=float(resp['price']),
-            settle_type=resp['settleType'],
-            order_id=resp['orderId']
-        )
-        return order
+        return resp
 
     # def get_open_positions(self, order_id) -> Order:
     #     logger.info(f'action=get_open_positions status=run product_code={self.product_code}')
@@ -429,6 +435,7 @@ class APIClient(object):
         ask = ticker.ask
         size = available / ask * self.fx_actual_leverage
         size = math.floor(size * 10 ** decimal_point) / (10 ** decimal_point)
+        size = 0.02
         return size
 
 class RealtimeAPI(object):

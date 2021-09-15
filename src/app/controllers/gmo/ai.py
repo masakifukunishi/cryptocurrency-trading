@@ -18,6 +18,7 @@ import settings.settings as settings
 
 logger = logging.getLogger(__name__)
 
+MAXIMUM_PRICE = 999999999
 
 def duration_seconds(duration: str) -> int:
     if duration == constants.DURATION_10S:
@@ -53,7 +54,7 @@ class AI(object):
         self.target_period = settings.target_period
         self.back_test_target_period = settings.back_test_target_period
         self.optimized_trade_params = None
-        self.stop_limit_buy = 999999999
+        self.stop_limit_buy = MAXIMUM_PRICE
         self.stop_limit_sell = 0
         self.stop_limit_percent_sell = settings.stop_limit_percent_sell
         self.stop_limit_percent_buy = settings.stop_limit_percent_buy
@@ -97,7 +98,8 @@ class AI(object):
                                                size = 0.1,
                                                settle_type = next_order_settle_type,
                                                indicator = indicator,
-                                               save=True)
+                                               is_loss_cut = False,
+                                               save = True)
             return could_buy
 
         if self.start_trade > candle.time:
@@ -111,7 +113,8 @@ class AI(object):
                                                size = 0.1,
                                                settle_type = next_order_settle_type,
                                                indicator = indicator,
-                                               save=True)
+                                               is_loss_cut = False,
+                                               save = True)
             return could_buy
 
         # production
@@ -128,7 +131,6 @@ class AI(object):
             if not resp:
                 logger.error(f'action=buy status=error responce={resp}')
                 return False
-            logger.info(f'action=buy responce={resp}')
             could_buy = self.signal_events.buy(product_code = self.product_code,
                                                time = candle.time,
                                                price = candle.close,
@@ -136,7 +138,8 @@ class AI(object):
                                                order_id = resp.order_id,
                                                settle_type = resp.settle_type,
                                                indicator = indicator,
-                                               save=True)
+                                               is_loss_cut = is_loss_cut,
+                                               save = True)
             return could_buy
 
     def sell(self, candle, indicator, is_loss_cut):
@@ -151,7 +154,8 @@ class AI(object):
                                                size = 0.1,
                                                settle_type = next_order_settle_type,
                                                indicator = indicator,
-                                               save=True)
+                                               is_loss_cut = False,
+                                               save = True)
             return could_sell
 
         if self.start_trade > candle.time:
@@ -165,7 +169,8 @@ class AI(object):
                                                size = 0.1,
                                                settle_type = next_order_settle_type,
                                                indicator = indicator,
-                                               save=True)
+                                               is_loss_cut = False,
+                                               save = True)
             return could_sell
 
         # production
@@ -182,7 +187,7 @@ class AI(object):
             if not resp:
                 logger.error(f'action=buy status=error responce={resp}')
                 return False
-            logger.info(f'action=sell responce={resp}')
+
             could_sell = self.signal_events.sell(product_code = self.product_code,
                                                time = candle.time,
                                                price = candle.close,
@@ -190,7 +195,8 @@ class AI(object):
                                                order_id = resp.order_id,
                                                settle_type = resp.settle_type,
                                                indicator = indicator,
-                                               save=True)
+                                               is_loss_cut = is_loss_cut,
+                                               save = True)
             return could_sell
 
     def loss_cut(self):
@@ -198,14 +204,17 @@ class AI(object):
             return
 
         latest_candle = self.candle_cls.get_latest_candle()
+        if not latest_candle:
+            return False
+
         if self.stop_limit_buy < latest_candle.close:
-            if not self.buy(candle=latest_candle, indicator='loss cut', is_loss_cut=True):
+            if self.buy(candle=latest_candle, indicator='loss cut', is_loss_cut=True):
                 logger.info('action=loss_cut status=buy')
-                self.stop_limit_buy = 999999999
+                self.stop_limit_buy = MAXIMUM_PRICE
                 self.update_optimize_params(is_continue=False)
 
         if self.stop_limit_sell > latest_candle.close:
-            if not self.sell(candle=latest_candle, indicator='loss cut', is_loss_cut=True):
+            if self.sell(candle=latest_candle, indicator='loss cut', is_loss_cut=True):
                 logger.info('action=loss_cut status=sell')
                 self.stop_limit_sell = 0.0
                 self.update_optimize_params(is_continue=False)
@@ -322,7 +331,7 @@ class AI(object):
                     # self.stop_limit_sell = df.candles[i].close * self.stop_limit_percent_sell
 
                 if last_event.settle_type == constants.CLOSE:
-                    self.stop_limit_buy = 999999999
+                    self.stop_limit_buy = MAXIMUM_PRICE
                     self.update_optimize_params(is_continue=False)
 
             if sell_point > 0 or self.stop_limit_sell > df.candles[i].close:

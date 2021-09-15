@@ -76,7 +76,10 @@ class SignalEvents(object):
         else:
             self.signals = signals
 
-    def can_buy(self, time):
+    def can_buy(self, time, is_loss_cut):
+        if is_loss_cut:
+            return True
+
         if len(self.signals) == 0:
             return True
 
@@ -145,14 +148,14 @@ class SignalEvents(object):
         if last_signal.settle_type == constants.CLOSE:
             return constants.OPEN
 
-    def buy(self, product_code, time, price, size, order_id=None, settle_type=None, indicator=None, save=True):
+    def buy(self, product_code, time, price, size, order_id=None, settle_type=None, indicator=None, is_loss_cut=False, save=True):
 
         if settings.trade_type == constants.TRADE_TYPE_BUY:
-            if not self.can_buy(time):
+            if not self.can_buy(time=time, is_loss_cut=is_loss_cut):
                 return False
 
         if settings.trade_type == constants.TRADE_TYPE_FX:
-            if not self.can_buy_fx(time=time, is_loss_cut=False):
+            if not self.can_buy_fx(time=time, is_loss_cut=is_loss_cut):
                 return False
 
         signal_event = SignalEvent(time=time, 
@@ -170,14 +173,14 @@ class SignalEvents(object):
 
         return True
 
-    def sell(self, product_code, time, price, size, order_id=None, settle_type=None, indicator=None, save=True):
+    def sell(self, product_code, time, price, size, order_id=None, settle_type=None, indicator=None, is_loss_cut=False, save=True):
 
         if settings.trade_type == constants.TRADE_TYPE_BUY:
-            if not self.can_sell(time, is_loss_cut=False):
+            if not self.can_sell(time, is_loss_cut=is_loss_cut):
                 return False
 
         if settings.trade_type == constants.TRADE_TYPE_FX:
-            if not self.can_sell_fx(time=time, is_loss_cut=False):
+            if not self.can_sell_fx(time=time, is_loss_cut=is_loss_cut):
                 return False
 
         signal_event = SignalEvent(time=time,
@@ -187,7 +190,7 @@ class SignalEvents(object):
                                    size=size,
                                    order_id=order_id,
                                    settle_type=settle_type,
-                                   indicator=indicator)
+                                   indicator=indicator,)
         if save:
             signal_event.save()
 
