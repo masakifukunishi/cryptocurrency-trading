@@ -223,7 +223,7 @@ class AI(object):
     def trade(self, is_created):
 
         if not is_created:
-            self.loss_cut()
+            # self.loss_cut()
             return
 
         logger.info('action=trade status=run')
