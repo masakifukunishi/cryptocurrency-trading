@@ -203,33 +203,6 @@ class AI(object):
         else:
             df.set_all_candles(self.target_period)
 
-        params = self.optimized_trade_params
-
-#         if params is None:
-#             logger.info(f'action=trade optimized_trade_params=None')
-#             return
-        if params is None:
-            logger.info(f'action=trade optimized_trade_params=None candles={len(df.candles)}')
-            self.start_trade = datetime.datetime.utcnow()
-            self.update_optimize_params(is_continue=False)
-            return
-
-        # if params.ema_enable:
-        #     ema_values_1 = talib.EMA(np.array(df.closes), params.ema_period_1)
-        #     ema_values_2 = talib.EMA(np.array(df.closes), params.ema_period_2)
-
-        if params.bb_enable:
-            bb_up, _, bb_down = talib.BBANDS(np.array(df.closes), params.bb_n, params.bb_k, params.bb_k, 0)
-
-        if params.ichimoku_enable:
-            tenkan, kijun, senkou_a, senkou_b, chikou = ichimoku_cloud(df.closes)
-
-        if params.rsi_enable:
-            rsi_values = talib.RSI(np.array(df.closes), params.rsi_period)
-
-        if params.macd_enable:
-            macd, macd_signal, _ = talib.MACD(np.array(df.closes), params.macd_fast_period, params.macd_slow_period, params.macd_signal_period)
-
         for i in range(1, len(df.candles)):
             target_candle = i + 1
             if self.environment != constants.ENVIRONMENT_DEV and target_candle != len(df.candles):
@@ -237,6 +210,32 @@ class AI(object):
                 
             buy_point, sell_point = 0, 0
             trade_log, indicator = '', ''
+
+            params = self.optimized_trade_params
+
+            if params is None:
+                logger.info(f'action=trade optimized_trade_params=None candles={len(df.candles)}')
+                self.start_trade = datetime.datetime.utcnow()
+                self.update_optimize_params(is_continue=False)
+                continue
+
+            # if params.ema_enable:
+            #     ema_values_1 = talib.EMA(np.array(df.closes), params.ema_period_1)
+            #     ema_values_2 = talib.EMA(np.array(df.closes), params.ema_period_2)
+
+            if params.bb_enable:
+                bb_up, _, bb_down = talib.BBANDS(np.array(df.closes), params.bb_n, params.bb_k, params.bb_k, 0)
+
+            if params.ichimoku_enable:
+                tenkan, kijun, senkou_a, senkou_b, chikou = ichimoku_cloud(df.closes)
+
+            if params.rsi_enable:
+                rsi_values = talib.RSI(np.array(df.closes), params.rsi_period)
+
+            if params.macd_enable:
+                macd, macd_signal, _ = talib.MACD(np.array(df.closes), params.macd_fast_period, params.macd_slow_period, params.macd_signal_period)
+
+
             # if params.ema_enable and params.ema_period_1 <= i and params.ema_period_2 <= i:
             #     if ema_values_1[i - 1] < ema_values_2[i - 1] and ema_values_1[i] >= ema_values_2[i]:
             #         buy_point += 1
