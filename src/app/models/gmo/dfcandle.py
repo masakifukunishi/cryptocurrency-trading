@@ -288,8 +288,8 @@ class DataFrameCandle(object):
         best_n = 20
         best_k = 2.0
 
-        for n in range(10, 20):
-            for k in np.arange(1.9, 2.1, 0.1):
+        for n in range(16, 22):
+            for k in np.arange(1.9, 2.2, 0.1):
                 signal_events = self.back_test_bb(n, k)
                 if signal_events is None:
                     continue

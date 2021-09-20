@@ -201,13 +201,16 @@ class AI(object):
         if not latest_candle:
             return False
 
-        if self.stop_limit_buy < latest_candle.close:
+        loss_cut_buy_price = self.stop_limit_buy * self.stop_limit_percent_buy
+        loss_cut_sell_price = self.stop_limit_sell * self.stop_limit_percent_sell
+        
+        if loss_cut_buy_price < latest_candle.close:
             if self.buy(candle=latest_candle, indicator='loss cut', is_loss_cut=True):
                 logger.info('action=loss_cut status=buy')
                 self.stop_limit_buy = MAXIMUM_PRICE
                 self.update_optimize_params(is_continue=False)
 
-        if self.stop_limit_sell > latest_candle.close:
+        if loss_cut_sell_price > latest_candle.close:
             if self.sell(candle=latest_candle, indicator='loss cut', is_loss_cut=True):
                 logger.info('action=loss_cut status=sell')
                 self.stop_limit_sell = 0.0
@@ -217,7 +220,7 @@ class AI(object):
     def trade(self, is_created):
 
         if not is_created:
-            # self.loss_cut()
+            self.loss_cut()
             return
 
         logger.info('action=trade status=run')
