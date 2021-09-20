@@ -95,12 +95,6 @@ class AI(object):
 
             # logger.info(f'action=buy signal_events={self.signal_events.value}')
             return could_buy
-
-        if self.start_trade > candle.time:
-            # logger.warning('action=buy status=false error=old_time')
-            # logger.warning(f'start_trade={self.start_trade}')
-            # logger.warning(f'candle_time={candle.time}')
-            return False
             
         # staging
         if self.environment == constants.ENVIRONMENT_STAGING:
@@ -152,12 +146,6 @@ class AI(object):
                                                save = True)
             # logger.info(f'action=sell signal_events={self.signal_events.value}')
             return could_sell
-
-        if self.start_trade > candle.time:
-            # logger.warning('action=sell status=false error=old_time')
-            # logger.warning(f'start_trade={self.start_trade}')
-            # logger.warning(f'candle_time={candle.time}')
-            return False
 
         # staging
         if self.environment == constants.ENVIRONMENT_STAGING:
@@ -222,10 +210,10 @@ class AI(object):
 #             return
         if params is None:
             logger.info(f'action=trade optimized_trade_params=None candles={len(df.candles)}')
-            if len(df.candles) >= settings.minimum_period:
-                self.start_trade = datetime.datetime.utcnow()
-                self.update_optimize_params(is_continue=False)
+            self.start_trade = datetime.datetime.utcnow()
+            self.update_optimize_params(is_continue=False)
             return
+
         # if params.ema_enable:
         #     ema_values_1 = talib.EMA(np.array(df.closes), params.ema_period_1)
         #     ema_values_2 = talib.EMA(np.array(df.closes), params.ema_period_2)
@@ -243,6 +231,10 @@ class AI(object):
             macd, macd_signal, _ = talib.MACD(np.array(df.closes), params.macd_fast_period, params.macd_slow_period, params.macd_signal_period)
 
         for i in range(1, len(df.candles)):
+            target_candle = i + 1
+            if self.environment != constants.ENVIRONMENT_DEV and target_candle != len(df.candles):
+                continue
+                
             buy_point, sell_point = 0, 0
             trade_log, indicator = '', ''
             # if params.ema_enable and params.ema_period_1 <= i and params.ema_period_2 <= i:

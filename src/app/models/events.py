@@ -136,7 +136,7 @@ class SignalEvents(object):
 
     def get_next_order_settle_type(self):
         if settings.trade_type != constants.TRADE_TYPE_FX:
-            return ''
+            return None
             
         if len(self.signals) == 0:
             return constants.OPEN

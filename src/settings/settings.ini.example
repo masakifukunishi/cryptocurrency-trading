@@ -54,5 +54,4 @@ execute_delete_candle_duration = 14400
 stop_limit_target_preiod = 
 initial_period = 
 target_period = 
-minimum_period = 
 storage_period = 
