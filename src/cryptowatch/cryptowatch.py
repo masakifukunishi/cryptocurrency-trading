@@ -17,8 +17,8 @@ class Candle(object):
             'periods': self.preiods,
             }
         
-    def get_candles(self):
+    def get_candles(self, period):
         resp_candles = requests.get(self.url, params=self.query).json()['result'][self.preiods]
         del resp_candles[-1]
-        candles = resp_candles[-settings.initial_period:]
+        candles = resp_candles[-period:]
         return candles

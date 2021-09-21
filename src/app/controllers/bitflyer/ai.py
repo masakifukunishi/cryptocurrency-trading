@@ -55,8 +55,10 @@ class AI(object):
         self.environment = settings.environment
         self.start_trade = datetime.datetime.utcnow()
         self.candle_cls = factory_candle_class(self.product_code, self.duration)
-        self.update_optimize_params(False)
         self.decimal_point = 3
+
+        if self.environment == constants.ENVIRONMENT_PRODUCTION:
+            self.update_optimize_params(False)
 
     def update_optimize_params(self, is_continue: bool):
         logger.info(f'action=update_optimize_params status=run is_continue={is_continue}')
@@ -173,8 +175,9 @@ class AI(object):
 
         if params is None:
             logger.info(f'action=trade optimized_trade_params=None candles={len(df.candles)}')
-            self.start_trade = datetime.datetime.utcnow()
-            self.update_optimize_params(is_continue=False)
+            if len(df.candles) >= self.target_period:
+                self.start_trade = datetime.datetime.utcnow()
+                self.update_optimize_params(is_continue=False)
             return
 
         # if params.ema_enable:
