@@ -48,7 +48,6 @@ class AI(object):
         self.use_percent = settings.use_percent
         self.duration = settings.trade_duration
         self.target_period = settings.target_period
-        self.back_test_target_period = settings.back_test_target_period
         self.optimized_trade_params = None
         self.stop_limit = 0
         self.stop_limit_percent_sell = settings.stop_limit_percent_sell
@@ -62,10 +61,7 @@ class AI(object):
     def update_optimize_params(self, is_continue: bool):
         logger.info(f'action=update_optimize_params status=run is_continue={is_continue}')
         df = DataFrameCandle(self.product_code, self.duration)
-        if self.environment == constants.ENVIRONMENT_DEV:
-            df.set_all_candles_dev_back_test(limit=self.target_period, signals=self.signal_events.signals)
-        else:
-            df.set_all_candles(limit=self.target_period)
+        df.set_all_candles(limit=self.target_period)
             
         if df.candles:
             self.optimized_trade_params = df.optimize_params()
@@ -94,17 +90,6 @@ class AI(object):
                                                save = True)
 
             # logger.info(f'action=buy signal_events={self.signal_events.value}')
-            return could_buy
-            
-        # staging
-        if self.environment == constants.ENVIRONMENT_STAGING:
-            could_buy = self.signal_events.buy(product_code = self.product_code,
-                                               time = candle.time,
-                                               price = candle.close,
-                                               size = 0.1,
-                                               indicator = indicator,
-                                               is_loss_cut = False,
-                                               save = True)
             return could_buy
 
         # production
@@ -147,17 +132,6 @@ class AI(object):
             # logger.info(f'action=sell signal_events={self.signal_events.value}')
             return could_sell
 
-        # staging
-        if self.environment == constants.ENVIRONMENT_STAGING:
-            could_sell = self.signal_events.sell(product_code = self.product_code,
-                                               time = candle.time,
-                                               price = candle.close,
-                                               size = 0.1,
-                                               indicator = indicator,
-                                               is_loss_cut = False,
-                                               save = True)
-            return could_sell
-
         # production
         if self.environment == constants.ENVIRONMENT_PRODUCTION:
             balance = self.API.get_balance(settings.sell_currency)
@@ -178,9 +152,6 @@ class AI(object):
             return could_sell
 
     def loss_cut(self):
-        if self.environment == constants.ENVIRONMENT_DEV:
-            return
-
         latest_candle = self.candle_cls.get_latest_candle()
 
         if self.stop_limit > latest_candle.close:
@@ -197,13 +168,8 @@ class AI(object):
 
         logger.info('action=trade status=run')
         df = DataFrameCandle(self.product_code, self.duration)
-
-        if self.environment == constants.ENVIRONMENT_DEV:
-            df.set_all_candles(self.back_test_target_period)
-        else:
-            df.set_all_candles(self.target_period)
-
-            params = self.optimized_trade_params
+        df.set_all_candles(self.target_period)
+        params = self.optimized_trade_params
 
         if params is None:
             logger.info(f'action=trade optimized_trade_params=None candles={len(df.candles)}')
@@ -229,7 +195,7 @@ class AI(object):
 
         for i in range(1, len(df.candles)):
             target_candle = i + 1
-            if self.environment != constants.ENVIRONMENT_DEV and target_candle != len(df.candles):
+            if target_candle != len(df.candles):
                 continue
                 
             buy_point, sell_point = 0, 0

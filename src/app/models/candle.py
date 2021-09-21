@@ -90,30 +90,6 @@ class BaseCandleMixin(object):
         candles.reverse()
         return candles
 
-    @classmethod
-    def get_all_candles_before_last_event(cls, limit, signals):
-        if signals:
-            last_event = signals[-1]
-            with session_scope() as session:
-                candles = session.query(cls).filter(
-                    cls.time <= last_event.time).order_by(
-                    desc(cls.time)).limit(limit).all()
-
-            if candles is None:
-                return None
-
-            candles.reverse()
-            return candles
-
-        else:
-            with session_scope() as session:
-                candles = session.query(cls).order_by(
-                    cls.time).limit(limit).all()
-
-            if candles is None:
-                return None
-            return candles
-
     @property
     def value(self):
         return {
