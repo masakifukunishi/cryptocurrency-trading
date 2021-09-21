@@ -144,11 +144,11 @@ class APIClient(object):
                 continue
             duration_time = constants.TRADE_MAP[duration]['duration']
             if duration_time in constants.GMO_ENABLE_PERIOD:
-                candles = self.get_initial_candles()
+                candles = self.get_initial_candles(settings.initial_period)
                 create_initial_candle_with_duration(self.product_code, duration, candles)
         logger.info('action=set_initial_candles status=end')
 
-    def get_initial_candles(self):
+    def get_initial_candles(self, period):
         try:
             candles = []
             # The GMO's candles period are from 6AM to 6PM
@@ -169,7 +169,7 @@ class APIClient(object):
                 candles.extend(response.json()['data'])
 
             sorted_candles = sorted(candles, key=lambda x: x['openTime'])
-            sorted_candles = sorted_candles[-settings.initial_period:]
+            sorted_candles = sorted_candles[-period:]
             list_candles = list(map(lambda x:[int(x["openTime"])/1000, x["open"], x["high"], x["low"], x["close"], x["volume"]], sorted_candles))
             logger.info('action=get_initial_candles status=end')
         except Exception as e:

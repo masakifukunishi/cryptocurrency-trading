@@ -141,12 +141,7 @@ def api_make_handler():
 
     events = request.args.get('events')
     if events:
-        if settings.environment == constants.ENVIRONMENT_DEV:
-            # from app.controllers.streamdata import stream
-            # df.events = stream.ai.signal_events
-            df.add_events(df.candles[0].time)
-        elif settings.environment == constants.ENVIRONMENT_STAGING or settings.environment == constants.ENVIRONMENT_PRODUCTION:
-            df.add_events(df.candles[0].time)
+        df.add_events(df.candles[0].time)
 
 
     return jsonify(df.value), 200

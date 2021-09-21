@@ -90,30 +90,6 @@ class BaseCandleMixin(object):
         candles.reverse()
         return candles
 
-    @classmethod
-    def get_all_candles_before_last_event(cls, limit, signals):
-        if signals:
-            last_event = signals[-1]
-            with session_scope() as session:
-                candles = session.query(cls).filter(
-                    cls.time <= last_event.time).order_by(
-                    desc(cls.time)).limit(limit).all()
-
-            if candles is None:
-                return None
-
-            candles.reverse()
-            return candles
-
-        else:
-            with session_scope() as session:
-                candles = session.query(cls).order_by(
-                    cls.time).limit(limit).all()
-
-            if candles is None:
-                return None
-            return candles
-
     @property
     def value(self):
         return {
@@ -205,6 +181,17 @@ def create_initial_candle_with_duration(product_code, duration, candles):
     
     logger.info(f'action=create_initial_candle_with_duration duration={duration} status=completion')
     
+    return True
+
+def create_backtest_candle_with_duration(product_code, duration, candle):
+    cls = factory_candle_class(product_code, duration)
+    time = datetime.utcfromtimestamp(candle[0])
+    open = candle[1]
+    high = candle[2]
+    low = candle[3]
+    close = candle[4]
+    volume = candle[5]
+    cls.create(time, open, close, high, low, volume)
     return True
 
 def delete_candle(product_code, duration):

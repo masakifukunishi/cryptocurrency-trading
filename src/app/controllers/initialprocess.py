@@ -13,5 +13,5 @@ class InitialProcess(object):
             duration_time = constants.TRADE_MAP[duration]['granularity']
             if duration_time in constants.CRYPTOWATCH_ENABLE_PERIOD:
                 candle = Candle(duration_time)
-                candles = candle.get_candles()
+                candles = candle.get_candles(settings.initial_period)
                 create_initial_candle_with_duration(settings.product_code, duration, candles)

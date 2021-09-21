@@ -55,3 +55,4 @@ stop_limit_target_preiod =
 initial_period = 
 target_period = 
 storage_period = 
+backtest_period =

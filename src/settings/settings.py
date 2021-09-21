@@ -54,5 +54,5 @@ execute_delete_candle_duration = int(conf['trading']['execute_delete_candle_dura
 stop_limit_target_preiod = int(conf['trading']['stop_limit_target_preiod'])
 initial_period = int(conf['trading']['initial_period'])
 target_period = int(conf['trading']['target_period'])
-back_test_target_period = int(conf['trading']['back_test_target_period'])
 storage_period = int(conf['trading']['storage_period'])
+backtest_period = int(conf['trading']['backtest_period'])
