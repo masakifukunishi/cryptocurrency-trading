@@ -183,6 +183,17 @@ def create_initial_candle_with_duration(product_code, duration, candles):
     
     return True
 
+def create_backtest_candle_with_duration(product_code, duration, candle):
+    cls = factory_candle_class(product_code, duration)
+    time = datetime.utcfromtimestamp(candle[0])
+    open = candle[1]
+    high = candle[2]
+    low = candle[3]
+    close = candle[4]
+    volume = candle[5]
+    cls.create(time, open, close, high, low, volume)
+    return True
+
 def delete_candle(product_code, duration):
     logger.info(f'action=delete_candle duration={duration} status=run')
     cls = factory_candle_class(product_code, duration)

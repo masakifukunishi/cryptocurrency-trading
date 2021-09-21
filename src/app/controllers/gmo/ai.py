@@ -45,8 +45,6 @@ class AI(object):
 
     def __init__(self):
         self.API = APIClient(settings.gmo_api_key, settings.gmo_api_secret)
-        self.API.set_initial_candles()
-
         self.signal_events = SignalEvents.get_signal_events_by_count(1)
         self.product_code = settings.product_code
         self.use_percent = settings.use_percent
@@ -63,8 +61,11 @@ class AI(object):
         self.fx_actual_leverage = settings.fx_actual_leverage
         self.start_trade = datetime.datetime.utcnow()
         self.candle_cls = factory_candle_class(self.product_code, self.duration)
-        self.update_optimize_params(False)
         self.decimal_point = 2
+        
+        if self.environment == constants.ENVIRONMENT_PRODUCTION:
+            self.API.set_initial_candles()
+            self.update_optimize_params(False)
 
     def update_optimize_params(self, is_continue: bool):
         logger.info(f'action=update_optimize_params status=run is_continue={is_continue}')
@@ -199,8 +200,9 @@ class AI(object):
 
         if params is None:
             logger.info(f'action=trade optimized_trade_params=None candles={len(df.candles)}')
-            self.start_trade = datetime.datetime.utcnow()
-            self.update_optimize_params(is_continue=False)
+            if len(df.candles) >= self.target_period:
+                self.start_trade = datetime.datetime.utcnow()
+                self.update_optimize_params(is_continue=False)
             return
         # if params.ema_enable:
         #     ema_values_1 = talib.EMA(np.array(df.closes), params.ema_period_1)
