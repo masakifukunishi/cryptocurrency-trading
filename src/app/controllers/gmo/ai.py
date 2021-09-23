@@ -62,6 +62,7 @@ class AI(object):
         self.start_trade = datetime.datetime.utcnow()
         self.candle_cls = factory_candle_class(self.product_code, self.duration)
         self.decimal_point = 2
+        self.open_indicator = []
         
         if self.environment == constants.ENVIRONMENT_PRODUCTION:
             self.API.set_initial_candles()
@@ -204,9 +205,9 @@ class AI(object):
                 self.start_trade = datetime.datetime.utcnow()
                 self.update_optimize_params(is_continue=False)
             return
-        # if params.ema_enable:
-        #     ema_values_1 = talib.EMA(np.array(df.closes), params.ema_period_1)
-        #     ema_values_2 = talib.EMA(np.array(df.closes), params.ema_period_2)
+        if params.ema_enable:
+            ema_values_1 = talib.EMA(np.array(df.closes), params.ema_period_1)
+            ema_values_2 = talib.EMA(np.array(df.closes), params.ema_period_2)
 
         if params.bb_enable:
             bb_up, _, bb_down = talib.BBANDS(np.array(df.closes), params.bb_n, params.bb_k, params.bb_k, 0)
@@ -226,24 +227,29 @@ class AI(object):
                 continue
             buy_point, sell_point = 0, 0
             trade_log, indicator = '', ''
+            current_indicator = []
 
-            # if params.ema_enable and params.ema_period_1 <= i and params.ema_period_2 <= i:
-            #     if ema_values_1[i - 1] < ema_values_2[i - 1] and ema_values_1[i] >= ema_values_2[i]:
-            #         buy_point += 1
-            #         trade_log += f'action=trade side=buy indicator=ema period_1={params.ema_period_1} period_2={params.ema_period_2}\n'
+            if params.ema_enable and params.ema_period_1 <= i and params.ema_period_2 <= i:
+                if ema_values_1[i - 1] < ema_values_2[i - 1] and ema_values_1[i] >= ema_values_2[i]:
+                    buy_point += 1
+                    trade_log += f'{constants.INDICATOR_EMA} period_1={params.ema_period_1} period_2={params.ema_period_2}\n'
+                    current_indicator.append(constants.INDICATOR_EMA)
 
-            #     if ema_values_1[i - 1] > ema_values_2[i - 1] and ema_values_1[i] <= ema_values_2[i]:
-            #         sell_point += 1
-            #         trade_log += f'action=trade side=sell indicator=ema period_1={params.ema_period_1} period_2={params.ema_period_2}\n'
+                if ema_values_1[i - 1] > ema_values_2[i - 1] and ema_values_1[i] <= ema_values_2[i]:
+                    sell_point += 1
+                    trade_log += f'{constants.INDICATOR_EMA}  period_1={params.ema_period_1} period_2={params.ema_period_2}\n'
+                    current_indicator.append(constants.INDICATOR_EMA)
 
             if params.bb_enable and params.bb_n <= i:
                 if bb_down[i - 1] > df.candles[i - 1].close and bb_down[i] <= df.candles[i].close:
                     buy_point += 1
-                    trade_log += f'action=trade side=buy indicator=bb n={params.bb_n} k={params.bb_k}\n'
+                    trade_log += f'{constants.INDICATOR_BB} n={params.bb_n} k={params.bb_k}\n'
+                    current_indicator.append(constants.INDICATOR_BB)
 
                 if bb_up[i - 1] < df.candles[i - 1].close and bb_up[i] >= df.candles[i].close:
                     sell_point += 1
-                    trade_log += f'action=trade side=sell indicator=bb n={params.bb_n} k={params.bb_k}\n'
+                    trade_log += f'{constants.INDICATOR_BB} n={params.bb_n} k={params.bb_k}\n'
+                    current_indicator.append(constants.INDICATOR_BB)
 
             if params.ichimoku_enable:
                 if (chikou[i-1] < df.candles[i-1].high and
@@ -252,7 +258,8 @@ class AI(object):
                         senkou_b[i] < df.candles[i].low and
                         tenkan[i] > kijun[i]):
                     buy_point += 1
-                    trade_log += 'action=trade side=buy indicator=ichimoku\n'
+                    trade_log += f'{constants.INDICATOR_ICHIMOKU}\n'
+                    current_indicator.append(constants.INDICATOR_ICHIMOKU)
 
                 if (chikou[i - 1] > df.candles[i - 1].low and
                         chikou[i] <= df.candles[i].low and
@@ -260,33 +267,42 @@ class AI(object):
                         senkou_b[i] > df.candles[i].high and
                         tenkan[i] < kijun[i]):
                     sell_point += 1
-                    trade_log += 'action=trade side=sell indicator=ichimoku\n'
+                    trade_log += f'{constants.INDICATOR_ICHIMOKU}\n'
+                    current_indicator.append(constants.INDICATOR_ICHIMOKU)
 
             if params.rsi_enable and rsi_values[i-1] != 0 and rsi_values[i-1] != 100:
                 if rsi_values[i-1] < params.rsi_buy_thread and rsi_values[i] >= params.rsi_buy_thread:
                     buy_point += 1
-                    trade_log += f'action=trade side=buy indicator=rsi period={params.rsi_period} buy_thread={params.rsi_buy_thread}\n'
+                    trade_log += f'{constants.INDICATOR_RSI} period={params.rsi_period} buy_thread={params.rsi_buy_thread}\n'
+                    current_indicator.append(constants.INDICATOR_RSI)
 
                 if rsi_values[i-1] > params.rsi_sell_thread and rsi_values[i] <= params.rsi_sell_thread:
                     sell_point += 1
-                    trade_log += f'action=trade side=sell indicator=rsi period={params.rsi_period} sell_thread={params.rsi_sell_thread}\n'
+                    trade_log += f'{constants.INDICATOR_RSI} period={params.rsi_period} sell_thread={params.rsi_sell_thread}\n'
+                    current_indicator.append(constants.INDICATOR_RSI)
 
             if params.macd_enable:
                 if macd[i] < 0 and macd_signal[i] < 0 and macd[i - 1] < macd_signal[i - 1] and macd[i] >= macd_signal[i]:
                     buy_point += 1
-                    trade_log += f'action=trade side=buy indicator=macd fast_period={params.macd_fast_period} slow_period={params.macd_slow_period} signal_period={params.macd_signal_period}\n'
+                    trade_log += f'{constants.INDICATOR_MACD} fast_period={params.macd_fast_period} slow_period={params.macd_slow_period} signal_period={params.macd_signal_period}\n'
+                    current_indicator.append(constants.INDICATOR_MACD)
 
                 if macd[i] > 0 and macd_signal[i] > 0 and macd[i-1] > macd_signal[i - 1] and macd[i] <= macd_signal[i]:
                     sell_point += 1
-                    trade_log += f'action=trade side=sell indicator=macd fast_period={params.macd_fast_period} slow_period={params.macd_slow_period} signal_period={params.macd_signal_period}\n'
+                    trade_log += f'{constants.INDICATOR_MACD} fast_period={params.macd_fast_period} slow_period={params.macd_slow_period} signal_period={params.macd_signal_period}\n'
+                    current_indicator.append(constants.INDICATOR_MACD)
 
             if buy_point > 0 or self.stop_limit_buy < df.candles[i].close:
+                match_indicator = set(current_indicator) & set(self.open_indicator)
+                if self.open_indicator and len(match_indicator) == 0 and self.stop_limit_buy > df.candles[i].close:
+                    continue
+
                 indicator = trade_log.rstrip('\n')
                 if not self.buy(candle=df.candles[i], indicator=indicator, is_loss_cut=False):
                     continue
 
-                logger.info(trade_log.rstrip('\n'))
                 logger.info(f'action=buy buy_point={buy_point} environment={self.environment} status=completion')
+                logger.info(trade_log.rstrip('\n'))
 
                 last_event = self.signal_events.signals[-1]
                 if last_event.settle_type == constants.OPEN:
@@ -294,20 +310,26 @@ class AI(object):
                     period_to = i + 1
                     stop_limit_target_candles = df.candles[period_from:period_to]
                     self.stop_limit_sell = min(stop_limit_target_candles, key=lambda x:x.low).low
+                    self.open_indicator.extend(current_indicator)
                     
                     # self.stop_limit_sell = df.candles[i].close * self.stop_limit_percent_sell
 
                 if last_event.settle_type == constants.CLOSE:
                     self.stop_limit_buy = MAXIMUM_PRICE
+                    self.open_indicator = []
                     self.update_optimize_params(is_continue=False)
 
             if sell_point > 0 or self.stop_limit_sell > df.candles[i].close:
+                match_indicator = set(current_indicator) & set(self.open_indicator)
+                if self.open_indicator and len(match_indicator) == 0 and self.stop_limit_sell < df.candles[i].close:
+                    continue
+
                 indicator = trade_log.rstrip('\n')
                 if not self.sell(candle=df.candles[i], indicator=indicator, is_loss_cut=False):
                     continue
 
-                logger.info(trade_log.rstrip('\n'))
                 logger.info(f'action=sell sell_point={sell_point} environment={self.environment} status=completion')
+                logger.info(trade_log.rstrip('\n'))
 
                 last_event = self.signal_events.signals[-1]
                 if last_event.settle_type == constants.OPEN:
@@ -315,9 +337,11 @@ class AI(object):
                     period_to = i + 1
                     stop_limit_target_candles = df.candles[period_from:period_to]
                     self.stop_limit_buy = max(stop_limit_target_candles, key=lambda x:x.high).high
+                    self.open_indicator.extend(current_indicator)
 
                     # self.stop_limit_buy = df.candles[i].close * self.stop_limit_percent_buy
                 if last_event.settle_type == constants.CLOSE:
                     self.stop_limit_sell = 0.0
+                    self.open_indicator = []
                     self.update_optimize_params(is_continue=False)
                 
