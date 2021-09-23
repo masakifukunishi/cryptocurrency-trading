@@ -209,8 +209,8 @@ class AI(object):
             ema_values_1 = talib.EMA(np.array(df.closes), params.ema_period_1)
             ema_values_2 = talib.EMA(np.array(df.closes), params.ema_period_2)
 
-        if params.bb_enable:
-            bb_up, _, bb_down = talib.BBANDS(np.array(df.closes), params.bb_n, params.bb_k, params.bb_k, 0)
+        # if params.bb_enable:
+        #     bb_up, _, bb_down = talib.BBANDS(np.array(df.closes), params.bb_n, params.bb_k, params.bb_k, 0)
 
         if params.ichimoku_enable:
             tenkan, kijun, senkou_a, senkou_b, chikou = ichimoku_cloud(df.closes)
@@ -240,16 +240,16 @@ class AI(object):
                     trade_log += f'{constants.INDICATOR_EMA} period_1={params.ema_period_1} period_2={params.ema_period_2}\n'
                     current_indicator.append(constants.INDICATOR_EMA)
 
-            if params.bb_enable and params.bb_n <= i:
-                if bb_down[i - 1] > df.candles[i - 1].close and bb_down[i] <= df.candles[i].close:
-                    buy_point += 1
-                    trade_log += f'{constants.INDICATOR_BB} n={params.bb_n} k={params.bb_k}\n'
-                    current_indicator.append(constants.INDICATOR_BB)
+            # if params.bb_enable and params.bb_n <= i:
+            #     if bb_down[i - 1] > df.candles[i - 1].close and bb_down[i] <= df.candles[i].close:
+            #         buy_point += 1
+            #         trade_log += f'{constants.INDICATOR_BB} n={params.bb_n} k={params.bb_k}\n'
+            #         current_indicator.append(constants.INDICATOR_BB)
 
-                if bb_up[i - 1] < df.candles[i - 1].close and bb_up[i] >= df.candles[i].close:
-                    sell_point += 1
-                    trade_log += f'{constants.INDICATOR_BB} n={params.bb_n} k={params.bb_k}\n'
-                    current_indicator.append(constants.INDICATOR_BB)
+            #     if bb_up[i - 1] < df.candles[i - 1].close and bb_up[i] >= df.candles[i].close:
+            #         sell_point += 1
+            #         trade_log += f'{constants.INDICATOR_BB} n={params.bb_n} k={params.bb_k}\n'
+            #         current_indicator.append(constants.INDICATOR_BB)
 
             if params.ichimoku_enable:
                 if (chikou[i-1] < df.candles[i-1].high and

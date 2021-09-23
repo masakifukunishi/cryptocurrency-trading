@@ -246,7 +246,7 @@ class DataFrameCandle(object):
         best_period_1 = 7
         best_period_2 = 14
 
-        for period_1 in range(5, 12):
+        for period_1 in range(7, 12):
             for period_2 in range(14, 22):
                 signal_events = self.back_test_ema(period_1, period_2)
                 if signal_events is None:
@@ -259,42 +259,42 @@ class DataFrameCandle(object):
 
         return performance, best_period_1, best_period_2
 
-    def back_test_bb(self, n: int, k: float):
-        if len(self.candles) <= n:
-            return None
-        signal_events = SignalEvents()
-        bb_up, _, bb_down = talib.BBANDS(np.array(self.closes), n, k, k, 0)
+    # def back_test_bb(self, n: int, k: float):
+    #     if len(self.candles) <= n:
+    #         return None
+    #     signal_events = SignalEvents()
+    #     bb_up, _, bb_down = talib.BBANDS(np.array(self.closes), n, k, k, 0)
     
-        for i in range(1, len(self.candles)):
-            if i < n:
-                continue
+    #     for i in range(1, len(self.candles)):
+    #         if i < n:
+    #             continue
 
-            if bb_down[i-1] > self.candles[i-1].close and bb_down[i] <= self.candles[i].close:
-                settle_type = signal_events.get_next_order_settle_type()
-                signal_events.buy(product_code=self.product_code, time=self.candles[i].time, price=self.candles[i].close, size=0.1, order_id='', settle_type=settle_type, indicator='', is_loss_cut=False, save=False)
+    #         if bb_down[i-1] > self.candles[i-1].close and bb_down[i] <= self.candles[i].close:
+    #             settle_type = signal_events.get_next_order_settle_type()
+    #             signal_events.buy(product_code=self.product_code, time=self.candles[i].time, price=self.candles[i].close, size=0.1, order_id='', settle_type=settle_type, indicator='', is_loss_cut=False, save=False)
 
-            if bb_up[i-1] < self.candles[i-1].close and bb_up[i] >= self.candles[i].close:
-                settle_type = signal_events.get_next_order_settle_type()
-                signal_events.sell(product_code=self.product_code, time=self.candles[i].time, price=self.candles[i].close, size=0.1, order_id='', settle_type=settle_type, indicator='', is_loss_cut=False, save=False)
+    #         if bb_up[i-1] < self.candles[i-1].close and bb_up[i] >= self.candles[i].close:
+    #             settle_type = signal_events.get_next_order_settle_type()
+    #             signal_events.sell(product_code=self.product_code, time=self.candles[i].time, price=self.candles[i].close, size=0.1, order_id='', settle_type=settle_type, indicator='', is_loss_cut=False, save=False)
 
-        return signal_events
+    #     return signal_events
 
-    def optimize_bb(self):
-        performance = 0
-        best_n = 20
-        best_k = 2.0
+    # def optimize_bb(self):
+    #     performance = 0
+    #     best_n = 20
+    #     best_k = 2.0
 
-        for n in range(16, 22):
-            for k in np.arange(1.9, 2.2, 0.1):
-                signal_events = self.back_test_bb(n, k)
-                if signal_events is None:
-                    continue
-                profit = self.get_profit(signal_events)
-                if performance < profit:
-                    performance = profit
-                    best_n = n
-                    best_k = k
-        return performance, best_n, best_k
+    #     for n in range(16, 22):
+    #         for k in np.arange(1.9, 2.2, 0.1):
+    #             signal_events = self.back_test_bb(n, k)
+    #             if signal_events is None:
+    #                 continue
+    #             profit = self.get_profit(signal_events)
+    #             if performance < profit:
+    #                 performance = profit
+    #                 best_n = n
+    #                 best_k = k
+    #     return performance, best_n, best_k
 
     def back_test_ichimoku(self):
         if len(self.candles) <= 52:
@@ -355,7 +355,7 @@ class DataFrameCandle(object):
         best_buy_thread = 30.0
         best_sell_thread = 70.0
 
-        for period in range(10, 20):
+        for period in range(15, 25):
             for buy_thread in np.arange(29.9, 30.1, 0.1):
                 for sell_thread in np.arange(69.9, 70.1, 0.1):
                     signal_events = self.back_test_rsi(period, buy_thread, sell_thread)
@@ -413,19 +413,18 @@ class DataFrameCandle(object):
     def optimize_params(self):
         logger.info(f'class=DataFrameCandle action=optimize_params status=run')
         ema_performance, ema_period_1, ema_period_2 = self.optimize_ema()
-        bb_performance, bb_n, bb_k = self.optimize_bb()
+        # bb_performance, bb_n, bb_k = self.optimize_bb()
         ichimoku_performance = self.optimize_ichimoku()
         rsi_performance, rsi_period, rsi_buy_thread, rsi_sell_thread = self.optimize_rsi()
         macd_performance, macd_fast_period, macd_slow_period, macd_signal_period = self.optimize_macd()
 
         ema_ranking = Dict2Obj({'performance': ema_performance, 'enable': False})
-        bb_ranking = Dict2Obj({'performance': bb_performance, 'enable': False})
+        # bb_ranking = Dict2Obj({'performance': bb_performance, 'enable': False})
         ichimoku_ranking = Dict2Obj({'performance': ichimoku_performance, 'enable': False})
         rsi_ranking = Dict2Obj({'performance': rsi_performance, 'enable': False})
         macd_ranking = Dict2Obj({'performance': macd_performance, 'enable': False})
 
-        rankings = [ema_ranking, bb_ranking, ichimoku_ranking, rsi_ranking, macd_ranking]
-        rankings = [bb_ranking, ichimoku_ranking, rsi_ranking, macd_ranking]
+        rankings = [ema_ranking, ichimoku_ranking, rsi_ranking, macd_ranking]
         rankings = sorted(rankings, key=lambda o: o.performance, reverse=True)
 
         is_enable = False
@@ -445,9 +444,9 @@ class DataFrameCandle(object):
             'ema_enable': ema_ranking.enable,
             'ema_period_1': ema_period_1,
             'ema_period_2': ema_period_2,
-            'bb_enable': bb_ranking.enable,
-            'bb_n': bb_n,
-            'bb_k': bb_k,
+            # 'bb_enable': bb_ranking.enable,
+            # 'bb_n': bb_n,
+            # 'bb_k': bb_k,
             'ichimoku_enable': ichimoku_ranking.enable,
             'rsi_enable': rsi_ranking.enable,
             'rsi_period': rsi_period,
