@@ -237,7 +237,7 @@ class AI(object):
 
                 if ema_values_1[i - 1] > ema_values_2[i - 1] and ema_values_1[i] <= ema_values_2[i]:
                     sell_point += 1
-                    trade_log += f'{constants.INDICATOR_EMA}  period_1={params.ema_period_1} period_2={params.ema_period_2}\n'
+                    trade_log += f'{constants.INDICATOR_EMA} period_1={params.ema_period_1} period_2={params.ema_period_2}\n'
                     current_indicator.append(constants.INDICATOR_EMA)
 
             if params.bb_enable and params.bb_n <= i:
