@@ -293,9 +293,9 @@ class AI(object):
                     current_indicator.append(constants.INDICATOR_MACD)
 
             if buy_point > 0 or self.stop_limit_buy < df.candles[i].close:
-                match_indicator = set(current_indicator) & set(self.open_indicator)
-                if self.open_indicator and len(match_indicator) == 0 and self.stop_limit_buy > df.candles[i].close:
-                    continue
+                # match_indicator = set(current_indicator) & set(self.open_indicator)
+                # if self.open_indicator and len(match_indicator) == 0 and self.stop_limit_buy > df.candles[i].close:
+                #     continue
 
                 indicator = trade_log.rstrip('\n')
                 if not self.buy(candle=df.candles[i], indicator=indicator, is_loss_cut=False):
@@ -320,9 +320,9 @@ class AI(object):
                     self.update_optimize_params(is_continue=False)
 
             if sell_point > 0 or self.stop_limit_sell > df.candles[i].close:
-                match_indicator = set(current_indicator) & set(self.open_indicator)
-                if self.open_indicator and len(match_indicator) == 0 and self.stop_limit_sell < df.candles[i].close:
-                    continue
+                # match_indicator = set(current_indicator) & set(self.open_indicator)
+                # if self.open_indicator and len(match_indicator) == 0 and self.stop_limit_sell < df.candles[i].close:
+                #     continue
 
                 indicator = trade_log.rstrip('\n')
                 if not self.sell(candle=df.candles[i], indicator=indicator, is_loss_cut=False):
