@@ -1,3 +1,5 @@
+<div align="center">
+
 # cryptocurrency-trading-with-ndicators
 
 Automated trading program for cryptocurrency with indicator :chart_with_upwards_trend:
