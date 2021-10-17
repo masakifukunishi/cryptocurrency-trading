@@ -38,16 +38,16 @@ Automated trading program for cryptocurrency with indicator :chart_with_upwards_
   - JupyterLab
   - Flask
 
-## Supported Exchanges
+## :office: Supported Exchanges
 
 - GMO (FX)
 - bitflyer (spot)
 
-## About Logic
+## :computer: About Logic
 
 The system calculates the best indicators, finds the best buy and sell points, and automatically executes trades.
 
-## Supported Indicators
+## :chart_with_upwards_trend: Supported Indicators
 
 - EMA
 - Bollinger Bands
