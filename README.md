@@ -29,11 +29,6 @@ Automated trading program for cryptocurrency with indicator :chart_with_upwards_
 
 </div>
 
-## :question: About this program
-
-The system calculates the best indicators from EMA, Bollinger Bands, Ichimoku, RSI, and MACD to find the best buy and sell points and automatically make trades. </br>
-GMO and bitFlyer exchanges are currently supported.
-
 ## :hammer_and_wrench: Stack
 
 - ubuntu
@@ -42,6 +37,23 @@ GMO and bitFlyer exchanges are currently supported.
   - SQLite
   - JupyterLab
   - Flask
+
+## Supported Exchanges
+
+- GMO (FX)
+- bitflyer (spot)
+
+## About Logic
+
+The system calculates the best indicators, finds the best buy and sell points, and automatically executes trades.
+
+## Supported Indicators
+
+- EMA
+- Bollinger Bands
+- Ichimoku
+- RSI
+- MACD
 
 ## :memo: Author
 
