@@ -54,8 +54,3 @@ The system calculates the best indicators, finds the best buy and sell points, a
 - Ichimoku
 - RSI
 - MACD
-
-## :tea: Author
-
-- [Twitter](https://twitter.com/masakiapp)
-- [Twitter-JP](https://twitter.com/masakifukunishi)
