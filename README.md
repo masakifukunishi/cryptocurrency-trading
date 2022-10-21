@@ -2,7 +2,7 @@
 
 # cryptocurrency-trading-by-indicators
 
-Automated trading program for cryptocurrency with indicator :chart_with_upwards_trend:
+Automated trading program for cryptocurrency by indicator :chart_with_upwards_trend:
 
 <a href="https://ubuntu.com/" target="_blank">
   <img width="80" alt="ubuntu-logo" src="https://user-images.githubusercontent.com/42294938/136695374-bf08e2da-217f-4a5e-ad75-f97b58d01fa6.png" />
